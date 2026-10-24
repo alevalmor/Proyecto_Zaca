@@ -1,0 +1,86 @@
+{% extends 'base.html' %}
+{% block titulo %}{{ 'Modificar lote' if lote else 'Nuevo lote' }}{% endblock %}
+{% block contenido %}
+<header class="encabezado">
+  <div>
+    <nav class="ruta" aria-label="Ruta"><a href="{{ url_for('inicio') }}">Inicio</a> / <a href="{{ url_for('lotes') }}">Lotes</a> / {{ 'Modificar' if lote else 'Nuevo' }}</nav>
+    <h1>{{ 'Modificar lote ' ~ lote.codigo if lote else 'Nuevo lote de producción' }}</h1>
+  </div>
+  <span class="chip">Solo PES · planta Metapa</span>
+</header>
+
+<div class="fila">
+  <form method="post" class="caja col3">
+    <input type="hidden" name="csrf" value="{{ csrf }}">
+    <h2 class="grande" style="margin:0">Datos de producción</h2>
+    <div class="campos">
+      <div class="campo">
+        <label for="codigo">Código del lote</label>
+        <input id="codigo" class="mono" value="{{ codigo }}" readonly>
+        <small>{{ 'No cambia al modificar' if lote else 'Se genera solo con el prefijo de la planta' }}</small>
+      </div>
+      <div class="campo">
+        <label for="cantidad_pupas">Cantidad de pupas</label>
+        <input id="cantidad_pupas" name="cantidad_pupas" inputmode="numeric" required value="{{ v.cantidad_pupas }}">
+      </div>
+      <div class="campo">
+        <label for="fecha_produccion">Fecha de producción</label>
+        <input id="fecha_produccion" name="fecha_produccion" type="date" required value="{{ v.fecha_produccion }}">
+      </div>
+      <div class="campo">
+        <label for="fecha_irradiacion">Fecha de irradiación</label>
+        <input id="fecha_irradiacion" name="fecha_irradiacion" type="date" required value="{{ v.fecha_irradiacion }}">
+      </div>
+      <div class="campo">
+        <label for="dosis_gy">Dosis de irradiación (Gy)</label>
+        <input id="dosis_gy" name="dosis_gy" type="number" step="0.1" min="90" max="160" required value="{{ v.dosis_gy }}">
+      </div>
+      <div class="campo">
+        <label for="cepa">Cepa</label>
+        <select id="cepa" name="cepa">
+          {% for c in ['Tapachula-7 TSL', 'VIENNA-8 TSL'] %}<option {{ 'selected' if v.cepa == c }}>{{ c }}</option>{% endfor %}
+        </select>
+      </div>
+      <div class="campo">
+        <label for="tinte">Color de tinte</label>
+        <select id="tinte" name="tinte">
+          {% for t in ['Rosa fluorescente', 'Naranja fluorescente', 'Verde fluorescente'] %}<option {{ 'selected' if v.tinte == t }}>{{ t }}</option>{% endfor %}
+        </select>
+      </div>
+      <div class="campo">
+        <label for="centro_empaque_id">Centro de empaque destino</label>
+        <select id="centro_empaque_id" name="centro_empaque_id">
+          {% for c in centros %}<option value="{{ c.id }}" {{ 'selected' if c.id|string == v.centro_empaque_id|string }}>{{ c.clave }} · {{ c.nombre }}</option>{% endfor %}
+        </select>
+      </div>
+    </div>
+    <div class="campo">
+      <label for="resp">Responsable</label>
+      <input id="resp" value="{{ session.nombre }} · {{ session.empleado }} (usuario en sesión)" readonly>
+    </div>
+    <div class="campo">
+      <label for="observaciones">Observaciones <span class="gris" style="font-weight:400">(opcional)</span></label>
+      <textarea id="observaciones" name="observaciones" rows="3">{{ v.observaciones or '' }}</textarea>
+    </div>
+    <div class="acciones fin">
+      <a class="btn gris" href="{{ url_for('lotes') }}">Cancelar</a>
+      <button class="btn">{{ 'Guardar cambios' if lote else 'Guardar lote' }}</button>
+    </div>
+  </form>
+
+  <aside class="col2">
+    <div class="caja">
+      <h2>Revisión antes de guardar</h2>
+      <ul class="checks">
+        {% for r in ['La irradiación es el mismo día o después de la producción', 'La dosis está entre 90 y 160 Gy', 'La cantidad de pupas es mayor que cero', 'El responsable es de la planta y está activo'] %}
+          <li><span class="m">✓</span><span>{{ r }}</span></li>
+        {% endfor %}
+      </ul>
+    </div>
+    <div class="aviso azul" style="padding:16px 18px;border-radius:12px;line-height:1.55">
+      <b style="display:block;margin-bottom:4px">¿Qué pasa al guardar?</b>
+      El lote recibe un id impar de la planta y aparece en el centro de empaque en segundos por la replicación. Queda en estado PRODUCIDO hasta registrar su control de calidad.
+    </div>
+  </aside>
+</div>
+{% endblock %}

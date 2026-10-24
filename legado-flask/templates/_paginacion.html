@@ -1,0 +1,7 @@
+<div class="paginacion">
+  <span>{% if total %}Mostrando {{ (pagina - 1) * por + 1 }}–{{ [pagina * por, total]|min }} de {{ total }}{% else %}Sin resultados{% endif %}{{ nota or '' }}</span>
+  <span class="acciones" style="gap:8px">
+    {% if pagina > 1 %}<a class="btn gris chico" href="{{ pagina_url(pagina - 1) }}">Anterior</a>{% endif %}
+    {% if pagina * por < total %}<a class="btn gris chico" href="{{ pagina_url(pagina + 1) }}">Siguiente</a>{% endif %}
+  </span>
+</div>

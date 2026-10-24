@@ -1,0 +1,86 @@
+{% extends 'admin/base.html' %}
+{% block titulo %}Nuevo usuario{% endblock %}
+{% block contenido %}
+<header>
+  <nav class="ruta" aria-label="Ruta"><a href="{{ url_for('usuarios') }}">Usuarios</a> / Nuevo</nav>
+  <h1>Nuevo usuario y accesos</h1>
+</header>
+
+<div class="fila">
+  <form method="post" class="col3">
+    <input type="hidden" name="csrf" value="{{ csrf }}">
+    <section class="caja">
+      <h2>1. Sede y perfil</h2>
+      <div class="opciones">
+        <a class="opcion {{ 'on' if perfil == 'PES' }}" href="{{ url_for('nuevo_usuario', perfil='PES') }}"><b>PES · Perfil esterilizador</b><span>Planta Metapa · lotes y su calidad</span></a>
+        <a class="opcion {{ 'on' if perfil == 'PEM' }}" href="{{ url_for('nuevo_usuario', perfil='PEM') }}"><b>PEM · Perfil empacador</b><span>Centro de empaque · envíos y liberaciones</span></a>
+      </div>
+      <input type="hidden" name="perfil" value="{{ perfil }}">
+    </section>
+
+    <section class="caja">
+      <h2>2. Datos de la persona</h2>
+      <div class="campos">
+        <div class="campo"><label for="nombre">Nombre(s)</label><input id="nombre" name="nombre" required value="{{ v.nombre }}"></div>
+        <div class="campo"><label for="ap_paterno">Apellido paterno</label><input id="ap_paterno" name="ap_paterno" required value="{{ v.ap_paterno }}"></div>
+        <div class="campo"><label for="ap_materno">Apellido materno</label><input id="ap_materno" name="ap_materno" value="{{ v.ap_materno }}"></div>
+        <div class="campo"><label for="puesto">Puesto</label>
+          <select id="puesto" name="puesto">
+            {% for p in (['Técnico de irradiación', 'Analista de control de calidad', 'Técnico de cría', 'Supervisor de turno'] if perfil == 'PES' else ['Jefe de empaque', 'Técnico de empaque', 'Piloto aviador', 'Chofer liberador', 'Técnico de liberación']) %}
+              <option {{ 'selected' if v.puesto == p }}>{{ p }}</option>
+            {% endfor %}
+          </select></div>
+        <div class="campo"><label for="telefono">Teléfono</label><input id="telefono" name="telefono" type="tel" value="{{ v.telefono }}"></div>
+        <div class="campo"><label for="correo">Correo</label><input id="correo" name="correo" type="email" value="{{ v.correo }}"></div>
+      </div>
+    </section>
+
+    <section class="caja">
+      <h2>3. Acceso</h2>
+      <div class="campos">
+        <div class="campo"><label for="ne">Número de empleado</label><input id="ne" class="mono" value="{{ prefijo }}…" readonly><small>Se asigna el siguiente al guardar</small></div>
+        <div class="campo"><label for="usuario_bd">Usuario</label><input id="usuario_bd" name="usuario_bd" class="mono" required pattern="[a-z][a-z0-9_.]{2,30}" placeholder="i.coutino" value="{{ v.usuario_bd }}"></div>
+        <div class="campo"><label for="pt">Contraseña temporal</label><input id="pt" value="Se genera al crear" readonly><small>Se muestra una sola vez al guardar</small></div>
+      </div>
+    </section>
+
+    <section class="caja">
+      <h2 style="margin-bottom:4px">4. Permisos en el Programa 1</h2>
+      <p class="gris" style="margin:0 0 12px;font-size:13px">Se llenan solos con el perfil. Puedes quitar permisos, pero no dar más de los que permite la sede en la base de datos.</p>
+      <div class="scroll">
+        <table style="min-width:420px">
+          <thead><tr><th>Vista</th><th class="centro">Ver</th><th class="centro">Modificar</th></tr></thead>
+          <tbody>
+          {% for clave, nombre, (ver, mod) in permisos %}
+            <tr><td>{{ nombre }}</td>
+              <td class="centro"><input type="checkbox" name="ver_{{ clave }}" aria-label="Ver {{ nombre }}" {{ 'disabled' if not ver }} {{ 'checked' if ver and (not enviado or ('ver_' ~ clave) in v) }}></td>
+              <td class="centro"><input type="checkbox" name="mod_{{ clave }}" aria-label="Modificar {{ nombre }}" {{ 'disabled' if not mod }} {{ 'checked' if mod and (not enviado or ('mod_' ~ clave) in v) }}></td></tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <div class="acciones" style="justify-content:flex-end">
+      <a class="btn gris" href="{{ url_for('usuarios') }}">Cancelar</a>
+      <button class="btn">Crear usuario</button>
+    </div>
+  </form>
+
+  <aside class="col2">
+    <div class="caja" style="font-size:14px">
+      <h2>Lo que se crea en la base</h2>
+      <ul style="margin:0;padding-left:18px;display:flex;flex-direction:column;gap:8px;line-height:1.5">
+        <li>Un registro en <span class="mono">responsable</span> con sede {{ sede }}</li>
+        <li>Un usuario de PostgreSQL dentro de <span class="mono">{{ rol }}</span></li>
+        <li>El mismo usuario en los dos servidores, porque los roles no se replican</li>
+        <li>Una entrada en la bitácora de auditoría</li>
+      </ul>
+    </div>
+    <div class="codigo mono">CREATE ROLE {{ v.usuario_bd or 'usuario' }} LOGIN
+  PASSWORD '********'
+  CONNECTION LIMIT 30
+  IN ROLE {{ rol }};</div>
+  </aside>
+</div>
+{% endblock %}

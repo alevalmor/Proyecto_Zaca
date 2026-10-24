@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+{% block titulo %}Lista de lotes{% endblock %}
+{% block contenido %}
+<header class="encabezado">
+  <div>
+    <nav class="ruta" aria-label="Ruta"><a href="{{ url_for('inicio') }}">Inicio</a> / Lotes</nav>
+    <h1>Lista de lotes</h1>
+  </div>
+  {% if puede('nuevo_lote', true) %}
+    <a class="btn" href="{{ url_for('nuevo_lote') }}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Nuevo lote</a>
+  {% endif %}
+</header>
+
+{% if es_pes %}<div class="aviso">Como PES puedes ver y modificar los lotes de la planta.</div>
+{% else %}<div class="aviso azul">Como PEM solo ves los lotes: los registra y modifica la planta. La calidad al recibirlos se registra en Estado de lote.</div>{% endif %}
+
+<form class="caja filtros" method="get" aria-label="Filtros">
+  <div class="campo ancho"><label for="q">Buscar por código</label><input id="q" name="q" type="search" class="mono" placeholder="MET-2026-…" value="{{ f.q }}"></div>
+  <div class="campo"><label for="estado">Estado</label>
+    <select id="estado" name="estado"><option value="">Todos</option>
+      {% for e in ['PRODUCIDO', 'APROBADO', 'RECHAZADO', 'ENVIADO', 'LIBERADO'] %}<option value="{{ e }}" {{ 'selected' if f.estado == e }}>{{ e|title }}</option>{% endfor %}
+    </select></div>
+  <div class="campo"><label for="desde">Desde</label><input id="desde" name="desde" type="date" value="{{ f.desde }}"></div>
+  <div class="campo"><label for="hasta">Hasta</label><input id="hasta" name="hasta" type="date" value="{{ f.hasta }}"></div>
+  <button class="btn borde">Filtrar</button>
+</form>
+
+<section class="caja tabla">
+  <div class="scroll">
+    <table style="min-width:820px">
+      <thead><tr><th>Código</th><th>Producción</th><th class="der">Pupas</th><th>Cepa</th><th>Destino</th><th>Calidad planta</th><th>Estado</th><th class="der">Acciones</th></tr></thead>
+      <tbody>
+      {% for l in filas %}
+        <tr>
+          <td class="mono">{{ l.codigo }}</td><td>{{ l.fecha_produccion|fecha }}</td><td class="der">{{ l.cantidad_pupas|miles }}</td>
+          <td>{{ l.cepa }}</td><td>{{ l.destino }}</td>
+          <td>{{ 'Pendiente' if l.calidad_planta is none else 'Aprobado' if l.calidad_planta else 'Rechazado' }}</td>
+          <td><span class="pill {{ l.estado }}">{{ l.estado }}</span></td>
+          <td class="acc">
+            <a href="{{ url_for('estado_lote', codigo=l.codigo) }}">Ver</a>
+            {% if puede('lotes', true) and l.estado in ('PRODUCIDO', 'APROBADO') %}<a href="{{ url_for('modificar_lote', codigo=l.codigo) }}">Modificar</a>{% endif %}
+          </td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% include '_paginacion.html' %}
+</section>
+{% endblock %}

@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+{% block titulo %}Inicio{% endblock %}
+{% block contenido %}
+<header class="encabezado">
+  <div>
+    <div class="ruta">Centro de empaque · Tapachula</div>
+    <h1>Buen día, {{ session.nombre_corto }}</h1>
+  </div>
+  <div class="acciones" style="gap:8px">
+    <span class="chip"><svg width="10" height="10" aria-hidden="true"><circle cx="5" cy="5" r="5" fill="#1d6b47"/></svg>Sincronizado con la planta</span>
+    <span class="chip blanco">Perfil PEM</span>
+  </div>
+</header>
+
+<section class="kpis" aria-label="Resumen">
+  <div class="kpi"><div class="t">Lotes aprobados por despachar</div><div class="n">{{ k.por_despachar }}</div><div class="d">llegaron de la planta</div></div>
+  <div class="kpi"><div class="t">Envíos en camino</div><div class="n ambar">{{ k.en_camino }}</div><div class="d">falta registrar su liberación</div></div>
+  <div class="kpi"><div class="t">Moscas liberadas este mes</div><div class="n">{{ k.liberadas_mes|millones }}</div><div class="d">aéreas y terrestres</div></div>
+  <div class="kpi"><div class="t">Zonas con prioridad alta</div><div class="n rojo">{{ altas|length }}</div><div class="d">hubo capturas silvestres</div></div>
+</section>
+
+<section class="acciones">
+  {% if puede('nuevo_envio', true) %}<a class="btn" href="{{ url_for('nuevo_envio') }}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Nuevo envío</a>{% endif %}
+  {% if envios %}<a class="btn borde" href="{{ url_for('estado_envio', codigo=envios[0].codigo) }}">Registrar liberación</a>{% endif %}
+  <a class="btn gris" href="{{ url_for('lotes', estado='APROBADO') }}">Calidad al recibir un lote</a>
+</section>
+
+<div class="fila">
+  <section class="caja col3">
+    <div class="encabezado" style="align-items:baseline"><h2 class="grande" style="margin:0">Envíos en camino</h2><a href="{{ url_for('envios') }}" style="font-size:14px">Ver todos los envíos</a></div>
+    <div class="scroll">
+      <table style="min-width:560px">
+        <thead><tr><th>Envío</th><th>Lote</th><th>Vehículo</th><th class="der">Moscas</th><th><span class="sr">Acción</span></th></tr></thead>
+        <tbody>
+        {% for e in envios %}
+          <tr><td class="mono">{{ e.codigo }}</td><td class="mono gris">{{ e.lote }}</td><td>{{ e.tipo|title }} {{ e.matricula }}</td>
+            <td class="der">{{ e.cantidad|miles }}</td><td class="acc"><a href="{{ url_for('estado_envio', codigo=e.codigo) }}">Liberar</a></td></tr>
+        {% else %}<tr><td colspan="5" class="gris">No hay envíos en camino.</td></tr>{% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+  <section class="caja col2">
+    <div class="encabezado" style="align-items:baseline"><h2 class="grande" style="margin:0">Dónde liberar más</h2><a href="{{ url_for('zonas') }}" style="font-size:14px">Ver reporte</a></div>
+    <p class="gris" style="margin:0;font-size:13px">Según el trampeo de los últimos 14 días (base de trampeo vía FDW)</p>
+    <div class="lista">
+      {% for z in altas[:4] %}
+        <div class="item">
+          <span><b style="font-size:14px">{{ z.clave }} · {{ z.nombre }}</b><small>MTD {{ '%.2f'|format(z.mtd) }} · {{ z.silvestres }} silvestres</small></span>
+          <span class="pill ALTA">ALTA</span>
+        </div>
+      {% else %}<p class="gris" style="margin:0">Sin capturas silvestres en el periodo.</p>{% endfor %}
+    </div>
+  </section>
+</div>
+{% endblock %}

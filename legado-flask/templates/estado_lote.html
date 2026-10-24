@@ -1,0 +1,122 @@
+{% extends 'base.html' %}
+{% block titulo %}{{ lote.codigo }}{% endblock %}
+{% block contenido %}
+{% set cp = calidades.get('PLANTA') %}{% set ce = calidades.get('EMPAQUE') %}
+<header class="encabezado">
+  <div>
+    <nav class="ruta" aria-label="Ruta"><a href="{{ url_for('lotes') }}">Lotes</a> / Estado</nav>
+    <div class="acciones" style="align-items:center;margin-top:4px">
+      <h1 class="mono" style="margin:0">{{ lote.codigo }}</h1>
+      <span class="pill {{ lote.estado }}" style="font-size:13px">{{ lote.estado }}</span>
+    </div>
+  </div>
+  {% if puede('lotes', true) and lote.estado in ('PRODUCIDO', 'APROBADO') %}<a class="btn gris" href="{{ url_for('modificar_lote', codigo=lote.codigo) }}">Modificar lote</a>{% endif %}
+</header>
+
+<section class="caja" aria-label="Recorrido del lote">
+  <h2>Recorrido del lote</h2>
+  <ol class="recorrido">
+    <li><span class="barra hecho"></span><b>Producido</b>{{ lote.fecha_produccion|fecha }}</li>
+    <li><span class="barra hecho"></span><b>Irradiado</b>{{ lote.fecha_irradiacion|fecha }} · {{ lote.dosis_gy }} Gy</li>
+    <li><span class="barra {{ 'hecho' if cp }}"></span><b>Calidad planta</b>{% if cp %}{{ 'Aprobado' if cp.aprobado else 'Rechazado' }} {{ cp.fecha|fecha }}{% else %}Pendiente{% endif %}</li>
+    <li><span class="barra {{ 'hecho' if ce }}"></span><b>Calidad empaque</b>{% if ce %}{{ 'Aprobado' if ce.aprobado else 'Rechazado' }} {{ ce.fecha|fecha }}{% else %}Opcional · sin prueba{% endif %}</li>
+    <li><span class="barra {{ 'hecho' if lote.envios }}"></span><b>Enviado</b>{{ lote.envios }} envío{{ 's' if lote.envios != 1 }}</li>
+    <li><span class="barra {{ 'hecho' if lote.envios and lote.entregados == lote.envios else 'parcial' if lote.entregados }}"></span><b>Liberado</b>{{ lote.entregados }} de {{ lote.envios }} envíos</li>
+  </ol>
+</section>
+
+<div class="fila">
+  <div class="col3">
+    <section class="caja">
+      <h2>Datos del lote</h2>
+      <dl class="datos">
+        <div><dt>Fecha de producción</dt><dd>{{ lote.fecha_produccion|fecha }}</dd></div>
+        <div><dt>Fecha de irradiación</dt><dd>{{ lote.fecha_irradiacion|fecha }}</dd></div>
+        <div><dt>Dosis</dt><dd>{{ lote.dosis_gy }} Gy</dd></div>
+        <div><dt>Pupas</dt><dd>{{ lote.cantidad_pupas|miles }}</dd></div>
+        <div><dt>Cepa</dt><dd>{{ lote.cepa }}</dd></div>
+        <div><dt>Tinte</dt><dd>{{ lote.tinte }}</dd></div>
+        <div><dt>Centro destino</dt><dd>{{ lote.centro_clave }} · {{ lote.centro_nombre }}</dd></div>
+        <div><dt>Registró</dt><dd>{{ lote.num_empleado }} · {{ lote.r_nombre[0] }}. {{ lote.ap_paterno }}</dd></div>
+        <div><dt>Enviadas / liberadas</dt><dd>{{ lote.enviadas|millones }} / {{ lote.liberadas|millones }}</dd></div>
+      </dl>
+      {% if lote.observaciones %}<p class="gris" style="margin:14px 0 0;font-size:14px">{{ lote.observaciones }}</p>{% endif %}
+    </section>
+
+    <section class="caja">
+      <h2>Control de calidad</h2>
+      <div class="opciones">
+        {% for et, c, clase in [('planta', cp, 'verde'), ('empaque', ce, 'azul')] %}
+          <div class="tarjeta {{ clase if c }}">
+            <div class="cab"><span>Etapa {{ et }}</span>
+              {% if c %}<span class="pill {{ 'APROBADO' if c.aprobado else 'RECHAZADO' }}">{{ 'APROBADO' if c.aprobado else 'RECHAZADO' }}</span>{% else %}<span class="pill">SIN PRUEBA</span>{% endif %}</div>
+            <div style="margin-top:8px;color:var(--gris2)">
+              {% if c %}Emergencia {{ c.emergencia }} % · Vuelo {{ c.vuelo }} %<br>Esterilidad {{ c.esterilidad }} % · Peso {{ c.peso_mg }} mg<br>{{ c.fecha|fecha }} · {{ c.num_empleado }}
+              {% elif et == 'empaque' %}Es opcional. La registra el centro de empaque al recibir el lote.
+              {% else %}Pendiente. Sin ella el lote no se puede enviar.{% endif %}
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    </section>
+
+    <section class="caja">
+      <h2>Envíos y liberaciones de este lote</h2>
+      <div class="scroll">
+        <table style="min-width:560px">
+          <thead><tr><th>Envío</th><th>Vehículo</th><th class="der">Enviadas</th><th>Zona</th><th class="der">Liberadas</th><th>Estado</th></tr></thead>
+          <tbody>
+          {% for e in envios %}
+            <tr><td class="mono"><a href="{{ url_for('estado_envio', codigo=e.codigo) }}">{{ e.codigo }}</a></td><td>{{ e.tipo|title }} {{ e.matricula }}</td>
+              <td class="der">{{ e.cantidad|miles }}</td><td>{{ e.zonas or '—' }}</td><td class="der">{{ e.liberadas|miles if e.liberadas else '—' }}</td>
+              <td><span class="pill {{ e.estado|replace(' ', '-') }}">{{ e.estado }}</span></td></tr>
+          {% else %}<tr><td colspan="6" class="gris">Este lote aún no tiene envíos.</td></tr>{% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+
+  <aside class="col2">
+    {% if puede('estado_lote', true) %}
+    <form method="post" class="caja" id="calidad">
+      <input type="hidden" name="csrf" value="{{ csrf }}">
+      <div>
+        <h2 style="margin:0">{{ ('Modificar prueba de la planta' if calidades.get(etapa) else 'Registrar prueba de la planta') if etapa == 'PLANTA' else 'Registrar prueba al recibir' }}</h2>
+        <p class="gris" style="margin:4px 0 0;font-size:13px">{{ 'Etapa PLANTA · solo la planta puede cambiarla' if etapa == 'PLANTA' else 'Etapa EMPAQUE · se guarda con id par del centro de empaque' }}</p>
+      </div>
+      <div class="campos" style="grid-template-columns:repeat(2,minmax(0,1fr));gap:12px">
+        <div class="campo"><label for="emergencia">Emergencia (%)</label><input id="emergencia" name="emergencia" type="number" step="0.01" min="0" max="100" required value="{{ v.emergencia }}"></div>
+        <div class="campo"><label for="vuelo">Vuelo (%)</label><input id="vuelo" name="vuelo" type="number" step="0.01" min="0" max="100" required value="{{ v.vuelo }}"></div>
+        <div class="campo"><label for="esterilidad">Esterilidad (%)</label><input id="esterilidad" name="esterilidad" type="number" step="0.01" min="0" max="100" required value="{{ v.esterilidad }}"></div>
+        <div class="campo"><label for="peso_mg">Peso pupa (mg)</label><input id="peso_mg" name="peso_mg" type="number" step="0.01" min="0.01" required value="{{ v.peso_mg }}"></div>
+      </div>
+      <div class="resultado" id="resultado" aria-live="polite">
+        <span style="font-size:13px">Resultado calculado</span><b>—</b>
+        <span style="font-size:12px">Aprueba con emergencia ≥ 75 %, vuelo ≥ 65 % y esterilidad ≥ 99.5 %</span>
+      </div>
+      <div class="campo"><label for="observaciones">Observaciones</label><textarea id="observaciones" name="observaciones" rows="2">{{ v.observaciones or '' }}</textarea></div>
+      <button class="btn">{{ 'Guardar cambios de la prueba' if calidades.get(etapa) else 'Registrar control de calidad' }}</button>
+    </form>
+    <script>
+      // Misma regla que reglas.calidad_aprobada y la columna control_calidad.aprobado
+      (function () {
+        const f = document.getElementById('calidad'), r = document.getElementById('resultado');
+        function calcular() {
+          const n = (id) => parseFloat(f.elements[id].value);
+          if (['emergencia', 'vuelo', 'esterilidad'].some((id) => isNaN(n(id)))) return;
+          const ok = n('emergencia') >= 75 && n('vuelo') >= 65 && n('esterilidad') >= 99.5;
+          r.classList.toggle('no', !ok);
+          r.querySelector('b').textContent = ok ? 'APROBADO' : 'RECHAZADO';
+        }
+        f.addEventListener('input', calcular);
+        calcular();
+      })();
+    </script>
+    {% endif %}
+    <div class="aviso ambar" style="border-radius:12px;padding:14px 16px">
+      El estado del lote no se escribe a mano: el sistema lo calcula con sus pruebas, envíos y liberaciones. Así las dos sedes nunca lo editan al mismo tiempo.
+    </div>
+  </aside>
+</div>
+{% endblock %}

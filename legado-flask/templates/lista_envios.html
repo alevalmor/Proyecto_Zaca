@@ -1,0 +1,60 @@
+{% extends 'base.html' %}
+{% block titulo %}Lista de envíos{% endblock %}
+{% block contenido %}
+<header class="encabezado">
+  <div>
+    <nav class="ruta" aria-label="Ruta"><a href="{{ url_for('inicio') }}">Inicio</a> / Envíos</nav>
+    <h1>Lista de envíos</h1>
+  </div>
+  {% if puede('nuevo_envio', true) %}
+    <a class="btn" href="{{ url_for('nuevo_envio') }}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Nuevo envío</a>
+  {% endif %}
+</header>
+
+{% if es_pes %}<div class="aviso">Como PES solo consultas los envíos: los registra el centro de empaque.</div>
+{% else %}<div class="aviso azul">Como PEM registras, modificas y liberas los envíos del centro de empaque.</div>{% endif %}
+
+<section class="kpis" aria-label="Resumen">
+  <div class="kpi"><div class="t">Total</div><div class="n">{{ resumen.values()|sum }}</div></div>
+  <div class="kpi"><div class="t">Entregados</div><div class="n">{{ resumen['ENTREGADO'] }}</div></div>
+  <div class="kpi"><div class="t">En camino</div><div class="n ambar">{{ resumen['EN CAMINO'] }}</div></div>
+  <div class="kpi"><div class="t">Cancelados</div><div class="n">{{ resumen['CANCELADO'] }}</div></div>
+</section>
+
+<form class="caja filtros" method="get" aria-label="Filtros">
+  <div class="campo ancho"><label for="q">Buscar envío o lote</label><input id="q" name="q" type="search" class="mono" placeholder="TAP-ENV-… o MET-2026-…" value="{{ f.q }}"></div>
+  <div class="campo"><label for="estado">Estado</label>
+    <select id="estado" name="estado"><option value="">Todos</option>
+      {% for e in ['EN CAMINO', 'ENTREGADO', 'CANCELADO'] %}<option value="{{ e }}" {{ 'selected' if f.estado == e }}>{{ e|capitalize }}</option>{% endfor %}
+    </select></div>
+  <div class="campo"><label for="tipo">Tipo</label>
+    <select id="tipo" name="tipo"><option value="">Aéreo y terrestre</option>
+      <option value="AVIONETA" {{ 'selected' if f.tipo == 'AVIONETA' }}>Aéreo</option>
+      <option value="CAMIONETA" {{ 'selected' if f.tipo == 'CAMIONETA' }}>Terrestre</option>
+    </select></div>
+  <button class="btn borde">Filtrar</button>
+</form>
+
+<section class="caja tabla">
+  <div class="scroll">
+    <table style="min-width:860px">
+      <thead><tr><th>Envío</th><th>Lote</th><th>Vehículo</th><th>Salida</th><th class="der">Moscas</th><th class="der">°C</th><th>Estado</th><th class="der">Acciones</th></tr></thead>
+      <tbody>
+      {% for e in filas %}
+        <tr>
+          <td class="mono">{{ e.codigo }}</td><td class="mono gris">{{ e.lote }}</td><td>{{ e.tipo|title }} {{ e.matricula }}</td>
+          <td>{{ e.fecha_salida|fechahora }}</td><td class="der">{{ e.cantidad|miles }}</td><td class="der">{{ e.temperatura }}</td>
+          <td><span class="pill {{ e.estado|replace(' ', '-') }}">{{ e.estado }}</span></td>
+          <td class="acc">
+            <a href="{{ url_for('estado_envio', codigo=e.codigo) }}">Ver</a>
+            {% if e.estado == 'EN CAMINO' and puede('estado_envio', true) %}<a href="{{ url_for('estado_envio', codigo=e.codigo) }}#liberar">Liberar</a>{% endif %}
+            {% if e.estado == 'EN CAMINO' and puede('envios', true) %}<a href="{{ url_for('modificar_envio', codigo=e.codigo) }}">Modificar</a>{% endif %}
+          </td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% include '_paginacion.html' %}
+</section>
+{% endblock %}

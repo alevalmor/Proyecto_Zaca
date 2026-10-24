@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block titulo %}{% endblock %} · Moscamed</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='estilos.css') }}">
+</head>
+<body class="{% block cuerpo %}{% endblock %}">
+{% block pagina %}
+<div class="app">
+  {% block menu %}
+  <nav class="menu" aria-label="Menú principal">
+    <div class="marca">
+      <svg width="30" height="30" viewBox="0 0 40 40" fill="none" stroke="#9fd3b2" stroke-width="2.4" aria-hidden="true"><circle cx="20" cy="20" r="17"/><path d="M12 22c4-8 12-8 16 0"/><path d="M20 10v20"/></svg>
+      <div><b>Moscamed</b><small>{{ 'Planta esterilizadora · Metapa' if es_pes else 'Centro de empaque · Tapachula' }}</small></div>
+    </div>
+    <div class="perfil"><b>Perfil {{ session.perfil }}</b><span>{{ 'Esterilizador de la planta' if es_pes else 'Empacador del centro' }}</span></div>
+    <div class="items">
+      {% for seccion, entradas in MENU %}
+          <div class="seccion">{{ seccion }}</div>
+          {% for vista, etiqueta, destino in entradas %}
+            <a href="{{ url_for(destino) }}" class="{{ 'activo' if activo == vista }}"{% if activo == vista %} aria-current="page"{% endif %}>
+              <span>{{ etiqueta }}</span>
+              {% if vista not in ('inicio', 'perfil') %}
+                {% if puede(vista, true) %}<span class="tag">Modificar</span>{% else %}<span class="tag ver">Solo ver</span>{% endif %}
+              {% endif %}
+            </a>
+          {% endfor %}
+      {% endfor %}
+    </div>
+    <div class="pie">
+      <b>{{ session.nombre }}</b>
+      <small class="mono">{{ session.empleado }} · {{ session.usuario }}</small>
+      <form method="post" action="{{ url_for('salir') }}"><input type="hidden" name="csrf" value="{{ csrf }}"><button>Cerrar sesión</button></form>
+    </div>
+  </nav>
+  {% endblock %}
+  <main>
+    {% for m in get_flashed_messages() %}<div class="aviso" role="status">{{ m }}</div>{% endfor %}
+    {% if errores %}<div class="aviso error" role="alert">{% for e in errores %}<div>{{ e }}</div>{% endfor %}</div>{% endif %}
+    {% block contenido %}{% endblock %}
+  </main>
+</div>
+{% endblock %}
+</body>
+</html>

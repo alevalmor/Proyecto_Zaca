@@ -1,0 +1,55 @@
+{% extends 'base.html' %}
+{% block titulo %}Zonas prioritarias{% endblock %}
+{% block contenido %}
+<header class="encabezado">
+  <div>
+    <nav class="ruta" aria-label="Ruta"><a href="{{ url_for('inicio') }}">Inicio</a> / Reportes</nav>
+    <h1>Zonas prioritarias y liberaciones</h1>
+    <p class="gris" style="margin:6px 0 0;font-size:14px">Cruza el trampeo (otra base de datos, leída en vivo con postgres_fdw) con lo que ya se liberó en cada zona</p>
+  </div>
+  <form method="get" class="filtros">
+    <div class="campo"><label for="corte">Fecha de corte</label><input id="corte" name="corte" type="date" value="{{ corte }}" onchange="this.form.submit()"></div>
+    <div class="segmento" role="group" aria-label="Periodo">
+      <a class="{{ 'on' if dias == 14 }}" href="{{ url_for('zonas', corte=corte, dias=14) }}">14 días</a>
+      <a class="{{ 'on' if dias == 30 }}" href="{{ url_for('zonas', corte=corte, dias=30) }}">30 días</a>
+    </div>
+    <input type="hidden" name="dias" value="{{ dias }}">
+    <a class="btn borde" href="{{ url_for('zonas', corte=corte, dias=dias, formato='csv') }}">Exportar</a>
+  </form>
+</header>
+
+<section class="kpis" aria-label="Resumen por prioridad">
+  <div class="kpi"><div class="t" style="display:flex;justify-content:space-between">Prioridad alta <span class="pill ALTA">ALTA</span></div><div class="n">{{ conteo['ALTA'] }} zonas</div><div class="d">Cayeron moscas silvestres: reforzar al doble</div></div>
+  <div class="kpi"><div class="t" style="display:flex;justify-content:space-between">Prioridad media <span class="pill MEDIA">MEDIA</span></div><div class="n">{{ conteo['MEDIA'] }} zonas</div><div class="d">Sin capturas, pero sin liberar en el periodo</div></div>
+  <div class="kpi"><div class="t" style="display:flex;justify-content:space-between">Protegidas <span class="pill NORMAL">NORMAL</span></div><div class="n">{{ conteo['NORMAL'] }} zonas</div><div class="d">Sin capturas y con liberaciones al día</div></div>
+</section>
+
+<section class="caja tabla">
+  <h2 style="padding:12px 16px 0">Zonas ordenadas por prioridad</h2>
+  <div class="scroll">
+    <table style="min-width:900px">
+      <thead><tr><th>Zona</th><th>Municipio</th><th class="der">Trampas</th><th class="der">Silvestres</th><th class="der">MTD</th><th class="der">Liberadas en el periodo</th><th>Prioridad</th><th class="der">Sugeridas por semana</th><th><span class="sr">Acción</span></th></tr></thead>
+      <tbody>
+      {% for z in filas %}
+        <tr><td class="mono">{{ z.clave }}</td><td>{{ z.municipio }}</td><td class="der">{{ z.trampas }}</td><td class="der">{{ z.silvestres }}</td>
+          <td class="der">{{ '%.4f'|format(z.mtd) }}</td><td class="der">{{ z.liberadas|miles }}</td><td><span class="pill {{ z.prioridad }}">{{ z.prioridad }}</span></td>
+          <td class="der">{{ z.sugeridas|miles }}</td>
+          <td class="acc">{% if puede('nuevo_envio', true) %}<a href="{{ url_for('nuevo_envio') }}">Planear envío</a>{% endif %}</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <p class="gris" style="font-size:13px;padding:0 16px 12px">MTD = moscas silvestres por trampa por día. Sugeridas = superficie × densidad objetivo, al doble si la prioridad es alta.</p>
+</section>
+
+<section class="caja">
+  <h2 style="margin-bottom:4px">Liberaciones por zona</h2>
+  <p class="gris" style="margin:0 0 14px;font-size:13px">Millones de moscas liberadas hasta el {{ corte|fecha }}, las 6 zonas con más moscas</p>
+  <div class="barras">
+    {% set tope = (barras|map(attribute='total')|max) if barras else 1 %}
+    {% for b in barras %}
+      <div><span>{{ b.clave }} · {{ b.municipio }}</span><span class="fondo"><span style="width: {{ (100 * b.total / tope)|round|int }}%"></span></span><span class="der">{{ b.total|millones }}</span></div>
+    {% else %}<p class="gris" style="margin:0">Aún no hay liberaciones.</p>{% endfor %}
+  </div>
+</section>
+{% endblock %}

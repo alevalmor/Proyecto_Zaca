@@ -1,0 +1,90 @@
+{% extends 'base.html' %}
+{% block titulo %}{{ envio.codigo }}{% endblock %}
+{% block contenido %}
+{% set editable = envio.estado == 'EN CAMINO' and puede('estado_envio', true) %}
+<header class="encabezado">
+  <div>
+    <nav class="ruta" aria-label="Ruta"><a href="{{ url_for('envios') }}">Envíos</a> / Estado</nav>
+    <div class="acciones" style="align-items:center;margin-top:4px">
+      <h1 class="mono" style="margin:0">{{ envio.codigo }}</h1>
+      <span class="pill {{ envio.estado|replace(' ', '-') }}" style="font-size:13px">{{ envio.estado }}</span>
+    </div>
+  </div>
+  {% if envio.estado == 'EN CAMINO' and puede('envios', true) %}<a class="btn gris" href="{{ url_for('modificar_envio', codigo=envio.codigo) }}">Modificar envío</a>{% endif %}
+</header>
+
+<section class="caja">
+  <dl class="datos">
+    <div><dt>Lote</dt><dd><a href="{{ url_for('estado_lote', codigo=envio.lote) }}" class="mono">{{ envio.lote }}</a></dd></div>
+    <div><dt>Vehículo</dt><dd>{{ envio.tipo|title }} {{ envio.matricula }} · {{ envio.modelo }}</dd></div>
+    <div><dt>Salida</dt><dd>{{ envio.fecha_salida|fechahora }}</dd></div>
+    <div><dt>Temperatura</dt><dd>{{ envio.temperatura }} °C</dd></div>
+    <div><dt>Moscas enviadas</dt><dd>{{ envio.cantidad|miles }}</dd></div>
+    <div><dt>Liberadas</dt><dd>{{ envio.liberadas|miles }}</dd></div>
+    <div><dt>Por liberar</dt><dd>{{ restantes|miles }}</dd></div>
+    <div><dt>Despachó</dt><dd>{{ envio.num_empleado }} · {{ envio.r_nombre[0] }}. {{ envio.ap_paterno }}</dd></div>
+  </dl>
+  <div class="progreso" aria-hidden="true"><div style="width: {{ (100 * envio.liberadas / envio.cantidad)|round|int }}%"></div></div>
+</section>
+
+<div class="fila">
+  <section class="col3">
+    <div class="caja">
+      <h2>Liberaciones registradas</h2>
+      {% if liberaciones %}
+        <div class="scroll">
+          <table style="min-width:520px">
+            <thead><tr><th>Zona</th><th>Fecha</th><th>Tipo</th><th class="der">Moscas</th><th class="der">Superficie</th><th class="der">Altitud</th></tr></thead>
+            <tbody>{% for li in liberaciones %}
+              <tr><td>{{ li.clave }} · {{ li.nombre }}</td><td>{{ li.fecha|fechahora }}</td><td>{{ 'Aérea' if envio.tipo == 'AVIONETA' else 'Terrestre' }}</td>
+                <td class="der">{{ li.cantidad|miles }}</td><td class="der">{{ li.superficie_ha|miles }} ha</td><td class="der">{{ (li.altitud_m|miles ~ ' m') if li.altitud_m else '—' }}</td></tr>
+            {% endfor %}</tbody>
+          </table>
+        </div>
+      {% else %}<p class="gris" style="margin:0">{{ 'Este envío fue cancelado.' if envio.cancelado else 'Este envío todavía no tiene liberaciones registradas.' }}</p>{% endif %}
+    </div>
+
+    {% if editable %}
+    <form method="post" class="caja" id="liberar">
+      <input type="hidden" name="csrf" value="{{ csrf }}">
+      <h2 style="margin:0">Registrar liberación</h2>
+      <div class="campos">
+        <div class="campo">
+          <label for="zona_clave">Zona</label>
+          <select id="zona_clave" name="zona_clave">
+            {% for z in zonas %}<option value="{{ z.clave }}" {{ 'selected' if z.clave == zona_sel }}>{{ z.clave }} · {{ z.nombre }} ({{ z.prioridad|lower }})</option>{% endfor %}
+          </select>
+          <small>O elígela en la lista de zonas sugeridas</small>
+        </div>
+        <div class="campo"><label for="fecha">Fecha y hora</label><input id="fecha" name="fecha" type="datetime-local" required value="{{ v.fecha }}"></div>
+        <div class="campo"><label for="cantidad">Moscas liberadas</label><input id="cantidad" name="cantidad" type="number" min="1" max="{{ restantes }}" required value="{{ v.cantidad }}"><small>Máximo {{ restantes|miles }} (lo que lleva el envío)</small></div>
+        <div class="campo"><label for="superficie_ha">Superficie cubierta (ha)</label><input id="superficie_ha" name="superficie_ha" type="number" step="0.1" min="0.1" required value="{{ v.superficie_ha }}"></div>
+        <div class="campo"><label for="altitud_m">Altitud de vuelo (m s. n. m.)</label><input id="altitud_m" name="altitud_m" type="number" min="0" {{ 'required' if envio.tipo == 'AVIONETA' }} value="{{ v.altitud_m }}">
+          <small>{{ 'Obligatoria porque el envío va en avioneta' if envio.tipo == 'AVIONETA' else 'Opcional en envíos terrestres' }}</small></div>
+        <div class="campo"><label for="piloto_id">Piloto o técnico</label>
+          <select id="piloto_id" name="piloto_id">{% for p in pilotos %}<option value="{{ p.id }}" {{ 'selected' if p.id|string == v.piloto_id|string }}>{{ p.num_empleado }} · {{ p.puesto }}</option>{% endfor %}</select></div>
+      </div>
+      <div class="acciones fin" style="justify-content:space-between">
+        <button class="btn gris" name="accion" value="cancelar" formnovalidate onclick="return confirm('¿Cancelar el envío {{ envio.codigo }}? No se puede deshacer.')">Cancelar envío</button>
+        <button class="btn" name="accion" value="liberar">Registrar liberación</button>
+      </div>
+    </form>
+    {% elif es_pes %}
+    <div class="aviso">Como PES solo consultas este envío. Las liberaciones las registra el centro de empaque.</div>
+    {% endif %}
+  </section>
+
+  <aside class="caja col2">
+    <h2 style="margin:0">Zonas sugeridas por el trampeo</h2>
+    <p class="gris" style="margin:0;font-size:13px">Ordenadas por prioridad (base de trampeo vía FDW, últimos 14 días)</p>
+    <div class="lista">
+      {% for z in sugeridas %}
+        {% if editable %}<a class="item {{ 'sel' if z.clave == zona_sel }}" href="{{ url_for('estado_envio', codigo=envio.codigo, zona=z.clave) }}#liberar">{% else %}<div class="item">{% endif %}
+          <span><b style="font-size:14px">{{ z.clave }} · {{ z.nombre }}</b><small>MTD {{ '%.2f'|format(z.mtd) }} · sugeridas {{ z.sugeridas|millones }}</small></span>
+          <span class="pill {{ z.prioridad }}">{{ z.prioridad }}</span>
+        {% if editable %}</a>{% else %}</div>{% endif %}
+      {% endfor %}
+    </div>
+  </aside>
+</div>
+{% endblock %}

@@ -1,0 +1,68 @@
+{% extends 'base.html' %}
+{% block titulo %}Mi perfil{% endblock %}
+{% block contenido %}
+<header>
+  <nav class="ruta" aria-label="Ruta"><a href="{{ url_for('inicio') }}">Inicio</a> / Ajustes / Perfil</nav>
+  <h1>Mi perfil</h1>
+</header>
+
+<div class="fila">
+  <div class="col3">
+    <section class="caja" style="display:flex;gap:18px;align-items:center;flex-wrap:wrap">
+      <div class="avatar" aria-hidden="true">{{ yo.nombre[0] }}{{ yo.ap_paterno[0] }}</div>
+      <div>
+        <div style="font-size:20px;font-weight:600">{{ session.nombre }}</div>
+        <div class="gris">{{ yo.puesto }} · {{ 'Planta esterilizadora Metapa' if es_pes else 'Centro de empaque Tapachula' }}</div>
+        <div class="acciones" style="gap:8px;margin-top:8px">
+          <span class="pill {{ session.perfil }}">Perfil {{ session.perfil }}</span><span class="pill mono">{{ yo.num_empleado }}</span><span class="pill mono">{{ yo.usuario_bd }}</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="caja">
+      <h2>Datos personales</h2>
+      <dl class="datos">
+        <div><dt>Correo</dt><dd>{{ yo.correo or '—' }}</dd></div>
+        <div><dt>Teléfono</dt><dd>{{ yo.telefono or '—' }}</dd></div>
+        <div><dt>Fecha de alta</dt><dd>{{ yo.fecha_alta|fecha }}</dd></div>
+        <div><dt>Sede</dt><dd>{{ 'Planta Metapa' if es_pes else 'Centro de empaque Tapachula' }}</dd></div>
+      </dl>
+      <p class="gris" style="margin:14px 0 0;font-size:14px">Para cambiar estos datos o tu perfil, pídeselo al administrador (Programa 2).</p>
+    </section>
+
+    <section class="caja">
+      <h2 style="margin-bottom:4px">Mis permisos</h2>
+      <p class="gris" style="margin:0 0 12px;font-size:13px">Los asigna el administrador según tu perfil</p>
+      <div class="scroll">
+        <table>
+          <thead><tr><th>Vista</th><th class="centro">Ver</th><th class="centro">Modificar</th></tr></thead>
+          <tbody>
+          {% for clave, nombre in vistas %}{% set p = session.permisos[clave] %}
+            <tr><td>{{ nombre }}</td>
+              <td class="centro"><span class="pill {{ 'si' if p[0] }}">{{ 'Sí' if p[0] else 'No' }}</span></td>
+              <td class="centro"><span class="pill {{ 'si' if p[1] }}">{{ 'Sí' if p[1] else 'No' }}</span></td></tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+
+  <aside class="col2">
+    <form method="post" class="caja">
+      <input type="hidden" name="csrf" value="{{ csrf }}">
+      <h2 style="margin:0">Cambiar contraseña</h2>
+      <div class="campo"><label for="actual">Contraseña actual</label><input id="actual" name="actual" type="password" required autocomplete="current-password"></div>
+      <div class="campo"><label for="nueva">Nueva contraseña</label><input id="nueva" name="nueva" type="password" required minlength="10" autocomplete="new-password"><small>Mínimo 10 caracteres, con número y símbolo</small></div>
+      <div class="campo"><label for="confirmar">Confirmar contraseña</label><input id="confirmar" name="confirmar" type="password" required minlength="10" autocomplete="new-password"></div>
+      <button class="btn">Guardar contraseña</button>
+    </form>
+    <section class="caja">
+      <h2>Sesión</h2>
+      <div class="renglon"><span>Servidor</span><span class="mono">{{ servidor[0] }}:{{ servidor[1] }}</span></div>
+      <div class="renglon"><span>Inicio de sesión</span><span>{{ session.entrada }}</span></div>
+      <div class="renglon" style="border:0"><span>Cierre por inactividad</span><span>5 min</span></div>
+    </section>
+  </aside>
+</div>
+{% endblock %}

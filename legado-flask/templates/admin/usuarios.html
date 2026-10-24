@@ -1,0 +1,51 @@
+{% extends 'admin/base.html' %}
+{% block titulo %}Usuarios y perfiles{% endblock %}
+{% block contenido %}
+<header class="encabezado">
+  <div><div class="ruta">Programa 2 · Administrador</div><h1>Usuarios y perfiles</h1></div>
+  <a class="btn" href="{{ url_for('nuevo_usuario') }}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Nuevo usuario</a>
+</header>
+
+<section class="kpis" aria-label="Resumen">
+  <div class="kpi"><div class="t">Perfiles PES (planta)</div><div class="n">{{ r.pes }}</div></div>
+  <div class="kpi"><div class="t">Perfiles PEM (empaque)</div><div class="n">{{ r.pem }}</div></div>
+  <div class="kpi"><div class="t">Activos</div><div class="n">{{ r.activos }}</div></div>
+  <div class="kpi"><div class="t">Dados de baja</div><div class="n">{{ r.bajas }}</div></div>
+</section>
+
+<form class="caja filtros" method="get" aria-label="Filtros">
+  <div class="campo ancho"><label for="q">Buscar nombre o número de empleado</label><input id="q" name="q" type="search" placeholder="Nombre, MET-… o TAP-…" value="{{ f.q }}"></div>
+  <div class="campo"><label for="sede">Perfil</label>
+    <select id="sede" name="sede"><option value="">Todos</option>
+      <option value="PLANTA" {{ 'selected' if f.sede == 'PLANTA' }}>PES · planta</option>
+      <option value="EMPAQUE" {{ 'selected' if f.sede == 'EMPAQUE' }}>PEM · empaque</option></select></div>
+  <div class="campo"><label for="activo">Estado</label>
+    <select id="activo" name="activo"><option value="">Activos y de baja</option>
+      <option value="true" {{ 'selected' if f.activo == 'true' }}>Activos</option>
+      <option value="false" {{ 'selected' if f.activo == 'false' }}>De baja</option></select></div>
+  <button class="btn borde">Filtrar</button>
+</form>
+
+<section class="caja tabla">
+  <div class="scroll">
+    <table style="min-width:900px">
+      <thead><tr><th>Nombre</th><th>Empleado</th><th>Puesto</th><th>Perfil</th><th>Usuario de acceso</th><th>Estado</th><th class="der">Acciones</th></tr></thead>
+      <tbody>
+      {% for u in filas %}{% set perfil = 'PES' if u.sede == 'PLANTA' else 'PEM' %}
+        <tr>
+          <td>{{ u.nombre }} {{ u.ap_paterno }} {{ u.ap_materno or '' }}</td><td class="mono">{{ u.num_empleado }}</td><td>{{ u.puesto }}</td>
+          <td><span class="pill {{ perfil }}">{{ perfil }}</span></td><td class="mono">{{ u.usuario_bd }}</td>
+          <td><span class="pill {{ 'Activo' if u.activo }}">{{ 'Activo' if u.activo else 'De baja' }}</span></td>
+          <td class="acc">
+            <form method="post" action="{{ url_for('accion_usuario', rid=u.id, accion='clave') }}"><input type="hidden" name="csrf" value="{{ csrf }}"><button class="link" onclick="return confirm('¿Restablecer la contraseña de {{ u.usuario_bd }}?')">Restablecer contraseña</button></form>
+            <form method="post" action="{{ url_for('accion_usuario', rid=u.id, accion='baja' if u.activo else 'reactivar') }}"><input type="hidden" name="csrf" value="{{ csrf }}"><button class="link" {% if u.activo %}onclick="return confirm('¿Dar de baja a {{ u.usuario_bd }}? Ya no podrá entrar.')"{% endif %}>{{ 'Dar de baja' if u.activo else 'Reactivar' }}</button></form>
+          </td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% set nota = ' · los usuarios dados de baja no pueden registrar nada' %}
+  {% include '_paginacion.html' %}
+</section>
+{% endblock %}

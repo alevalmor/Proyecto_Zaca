@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+{% block cuerpo %}admin{% endblock %}
+{% block menu %}
+<nav class="menu" aria-label="Menú del administrador">
+  <div class="marca">
+    <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#a8b8d8" stroke-width="1.8" aria-hidden="true"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/><path d="M9 12l2 2 4-4"/></svg>
+    <div><b>Moscamed Admin</b><small>Programa 2 · permisos superiores</small></div>
+  </div>
+  <div class="items">
+    <div class="seccion">Accesos</div>
+    {% for destino, etiqueta in [('usuarios', 'Usuarios y perfiles'), ('nuevo_usuario', 'Nuevo usuario'), ('sistema', 'Estado del sistema')] %}
+      <a href="{{ url_for(destino) }}" class="{{ 'activo' if request.endpoint == destino }}"{% if request.endpoint == destino %} aria-current="page"{% endif %}>{{ etiqueta }}</a>
+    {% endfor %}
+  </div>
+  <div class="pie">
+    <b>Administrador de la base</b>
+    <small class="mono">{{ session.usuario }} · {{ session.sede|lower }}</small>
+    <form method="post" action="{{ url_for('salir') }}"><input type="hidden" name="csrf" value="{{ csrf }}"><button>Cerrar sesión</button></form>
+  </div>
+</nav>
+{% endblock %}

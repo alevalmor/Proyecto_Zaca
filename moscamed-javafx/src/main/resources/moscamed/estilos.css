@@ -1,0 +1,126 @@
+/* Estilos del diseño "Mockups Sistema Moscamed". .root.admin cambia a la paleta del Programa 2. */
+.root {
+    acento: #1d6b47; acento-osc: #123826; acento-sel: #2b6b4b; acento-suave: #e8f3ec;
+    fondo: #f4f6f3; borde: #d9ded8; borde-input: #b9c2bb; linea: #edf0ec;
+    texto: #17201b; gris: #55605a; gris2: #3b463f;
+    menu-texto: #dbe8df; menu-sub: #a9c2b3; menu-sec: #8fb3a0; menu-perfil: #1b4a33; menu-linea: #2f5c45;
+    -fx-font-family: "Segoe UI"; -fx-font-size: 14px; -fx-background-color: fondo; -fx-text-fill: texto;
+}
+.root.admin {
+    acento: #34507f; acento-osc: #1c2433; acento-sel: #34507f; acento-suave: #eaf0fa;
+    fondo: #f3f5f8; borde: #d8dde6; linea: #eef1f5;
+    menu-texto: #d5dcea; menu-sub: #a8b4c8; menu-sec: #93a1b8; menu-perfil: #283349; menu-linea: #344157;
+}
+.label { -fx-text-fill: texto; }
+.mono { -fx-font-family: "Consolas"; }
+.gris { -fx-text-fill: gris; }
+.chico { -fx-font-size: 12px; }
+.h1 { -fx-font-size: 26px; -fx-font-weight: bold; }
+.h2 { -fx-font-size: 16px; -fx-font-weight: bold; }
+.h2-grande { -fx-font-size: 18px; }
+.ruta { -fx-font-size: 13px; -fx-text-fill: gris; }
+.dato { -fx-font-weight: bold; }
+.texto-error { -fx-text-fill: #9b1c1c; }
+.desplazable, .desplazable > .viewport { -fx-background-color: transparent; -fx-background: transparent; -fx-padding: 0; }
+.contenido { -fx-padding: 24 32 40 32; -fx-spacing: 18; }
+
+/* Menú lateral */
+.menu { -fx-background-color: acento-osc; -fx-padding: 22 14 22 14; -fx-spacing: 14; -fx-pref-width: 248; -fx-min-width: 248; }
+.menu .label { -fx-text-fill: #e8f0ea; }
+.menu .marca { -fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: white; }
+.menu .sub { -fx-font-size: 12px; -fx-text-fill: menu-sub; }
+.menu-perfil { -fx-background-color: menu-perfil; -fx-background-radius: 8; -fx-padding: 8 10 8 10; }
+.menu .seccion { -fx-font-size: 11px; -fx-font-weight: bold; -fx-text-fill: menu-sec; -fx-padding: 12 10 4 10; }
+.menu-item { -fx-background-color: transparent; -fx-background-radius: 8; -fx-pref-height: 40; -fx-padding: 0 10 0 10; -fx-cursor: hand; }
+.menu-item .label { -fx-text-fill: menu-texto; -fx-font-size: 15px; }
+.menu-item:hover { -fx-background-color: derive(acento-osc, 12%); }
+.menu-item.activo { -fx-background-color: acento-sel; }
+.menu-item.activo .label { -fx-text-fill: white; -fx-font-weight: bold; }
+.menu .tag { -fx-font-size: 11px; -fx-padding: 1 6 1 6; -fx-background-radius: 5; -fx-background-color: #d6eedf; -fx-text-fill: #123826; }
+.menu .tag-ver { -fx-background-color: #0d2a1c; -fx-text-fill: menu-sub; }
+.menu-pie { -fx-border-color: menu-linea transparent transparent transparent; -fx-padding: 14 8 0 8; -fx-spacing: 6; }
+.menu .hyperlink { -fx-text-fill: #cfe5d6; -fx-underline: true; -fx-padding: 0; }
+
+/* Piezas */
+.caja { -fx-background-color: white; -fx-border-color: borde; -fx-border-radius: 12; -fx-background-radius: 12; -fx-padding: 18 20 18 20; }
+.kpi { -fx-background-color: white; -fx-border-color: borde; -fx-border-radius: 12; -fx-background-radius: 12; -fx-padding: 16 18 16 18; }
+.kpi-t { -fx-text-fill: gris; }
+.kpi-n { -fx-font-size: 30px; -fx-font-weight: bold; }
+.kpi-gris { -fx-background-color: fondo; -fx-border-color: transparent; }
+.kpi-gris .kpi-n { -fx-font-size: 20px; }
+.ambar { -fx-text-fill: #8a4b00; }
+.rojo { -fx-text-fill: #9b1c1c; }
+.chip { -fx-background-color: #e3f2e8; -fx-text-fill: #145232; -fx-font-size: 13px; -fx-font-weight: bold; -fx-background-radius: 999; -fx-padding: 6 12 6 12; }
+.chip-blanco { -fx-background-color: white; -fx-border-color: borde; -fx-border-radius: 999; -fx-text-fill: gris2; -fx-font-weight: normal; }
+.pill { -fx-font-size: 12px; -fx-font-weight: bold; -fx-background-radius: 999; -fx-padding: 3 10 3 10; -fx-background-color: #eef0f2; -fx-text-fill: #3d4650; }
+.pill-APROBADO, .pill-NORMAL, .pill-Activo, .pill-PES, .pill-si, .pill-RECIBIDO { -fx-background-color: #e3f2e8; -fx-text-fill: #145232; }
+.pill-RECHAZADO, .pill-ALTA { -fx-background-color: #fbe4e2; -fx-text-fill: #9b1c1c; }
+.pill-ENVIADO, .pill-PEM, .pill-PEA { -fx-background-color: #e2ebfa; -fx-text-fill: #1d4f91; }
+.pill-LIBERADO, .pill-DISPERSADO, .pill-PED { -fx-background-color: #dff1ef; -fx-text-fill: #0f5c55; }
+.pill-EN-CAMINO, .pill-MEDIA { -fx-background-color: #fdf0d9; -fx-text-fill: #8a4b00; }
+.aviso { -fx-background-color: #e3f2e8; -fx-text-fill: #145232; -fx-background-radius: 8; -fx-padding: 10 14 10 14; }
+.aviso-azul { -fx-background-color: #e2ebfa; -fx-text-fill: #1d3a66; }
+.aviso-ambar { -fx-background-color: #fdf7ec; -fx-border-color: #edd9b5; -fx-border-radius: 8; -fx-text-fill: #5c3a00; }
+.aviso-error { -fx-background-color: #fbe4e2; -fx-text-fill: #9b1c1c; }
+.aviso-gris { -fx-background-color: fondo; -fx-text-fill: gris2; }
+.acciones-fin { -fx-border-color: linea transparent transparent transparent; -fx-padding: 16 0 0 0; }
+
+/* Botones y formularios */
+.btn { -fx-background-color: acento; -fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 14px; -fx-background-radius: 8; -fx-border-radius: 8; -fx-border-color: acento; -fx-pref-height: 44; -fx-padding: 0 18 0 18; -fx-cursor: hand; }
+.btn:hover { -fx-background-color: derive(acento, -15%); }
+.btn-borde { -fx-background-color: white; -fx-text-fill: acento; }
+.btn-borde:hover { -fx-background-color: acento-suave; }
+.btn-gris { -fx-background-color: white; -fx-text-fill: texto; -fx-border-color: #c7cfc9; -fx-font-weight: normal; }
+.btn-gris:hover { -fx-background-color: fondo; }
+.btn:disabled { -fx-background-color: borde; -fx-border-color: borde; -fx-text-fill: gris; -fx-opacity: 1; }
+.btn-chico { -fx-pref-height: 34; -fx-padding: 0 12 0 12; }
+.campo-lbl { -fx-font-weight: bold; }
+.text-field, .password-field, .text-area, .combo-box, .date-picker { -fx-background-color: white; -fx-border-color: borde-input; -fx-border-radius: 8; -fx-background-radius: 8; -fx-font-size: 14px; }
+.text-field, .password-field, .combo-box, .date-picker { -fx-pref-height: 42; }
+.text-field:focused, .password-field:focused, .text-area:focused, .combo-box:focused { -fx-border-color: acento; -fx-border-width: 2; }
+.text-field:readonly, .text-area:readonly { -fx-background-color: fondo; -fx-border-color: borde; -fx-text-fill: gris2; }
+.text-area .content { -fx-background-color: white; -fx-background-radius: 8; }
+.date-picker .text-field { -fx-border-color: transparent; -fx-pref-height: 38; }
+.hyperlink { -fx-text-fill: acento; -fx-underline: true; -fx-padding: 0; -fx-border-color: transparent; }
+.opcion { -fx-background-color: white; -fx-border-color: #c7cfc9; -fx-border-radius: 10; -fx-background-radius: 10; -fx-padding: 14; -fx-cursor: hand; -fx-alignment: top-left; }
+.opcion:selected { -fx-background-color: acento-suave; -fx-border-color: acento; -fx-border-width: 2; }
+.opcion .titulo { -fx-font-weight: bold; -fx-font-size: 15px; }
+.segmento .toggle-button { -fx-background-color: white; -fx-border-color: #c7cfc9; -fx-background-radius: 0; -fx-pref-height: 40; -fx-padding: 0 14 0 14; }
+.segmento .toggle-button:selected { -fx-background-color: acento-osc; -fx-text-fill: white; -fx-font-weight: bold; }
+
+/* Tablas */
+.tabla { -fx-hgap: 0; -fx-vgap: 0; }
+.th-celda { -fx-padding: 10 8 10 8; -fx-border-color: transparent transparent borde transparent; }
+.th { -fx-text-fill: gris; -fx-font-weight: bold; }
+.td-celda { -fx-padding: 10 8 10 8; -fx-border-color: transparent transparent linea transparent; -fx-min-height: 42; }
+
+/* Específicos */
+.barra { -fx-background-color: borde; -fx-background-radius: 3; -fx-pref-height: 6; -fx-min-height: 6; -fx-max-height: 6; }
+.barra-hecho { -fx-background-color: acento; }
+.tarjeta { -fx-border-color: borde-input; -fx-border-style: dashed; -fx-border-radius: 10; -fx-padding: 14 16 14 16; -fx-spacing: 8; }
+.tarjeta-verde { -fx-border-style: solid; -fx-border-color: #cfe3d6; -fx-background-color: #f3faf5; -fx-background-radius: 10; }
+.tarjeta-azul { -fx-border-style: solid; -fx-border-color: #cfdcf5; -fx-background-color: #f4f7fd; -fx-background-radius: 10; }
+.item { -fx-border-color: linea; -fx-border-radius: 8; -fx-background-radius: 8; -fx-background-color: white; -fx-padding: 10 12 10 12; -fx-cursor: hand; }
+.item-pendiente { -fx-border-color: #edd9b5; -fx-background-color: #fdf7ec; }
+.item-sel { -fx-border-color: acento; -fx-border-width: 2; -fx-background-color: #f3faf5; }
+.resultado { -fx-background-color: #e3f2e8; -fx-background-radius: 8; -fx-padding: 12 14 12 14; }
+.resultado .label { -fx-text-fill: #145232; }
+.resultado-no { -fx-background-color: #fbe4e2; }
+.resultado-no .label { -fx-text-fill: #9b1c1c; }
+.resultado-n { -fx-font-size: 20px; -fx-font-weight: bold; }
+.marca-ok { -fx-background-color: #e3f2e8; -fx-text-fill: #145232; -fx-background-radius: 11; -fx-min-width: 22; -fx-min-height: 22; -fx-alignment: center; -fx-font-weight: bold; }
+.marca-no { -fx-background-color: #fbe4e2; -fx-text-fill: #9b1c1c; }
+.progreso .bar { -fx-background-color: acento; -fx-background-radius: 4; -fx-background-insets: 0; }
+.progreso .track { -fx-background-color: borde; -fx-background-radius: 4; }
+.codigo { -fx-background-color: acento-osc; -fx-background-radius: 12; -fx-padding: 16 18 16 18; }
+.codigo .label { -fx-text-fill: #e6eaf2; -fx-font-family: "Consolas"; }
+.avatar { -fx-background-color: acento-osc; -fx-background-radius: 32; -fx-min-width: 64; -fx-min-height: 64; -fx-alignment: center; -fx-text-fill: white; -fx-font-size: 22px; -fx-font-weight: bold; }
+.renglon { -fx-border-color: transparent transparent linea transparent; -fx-padding: 6 0 6 0; }
+
+/* Inicio de sesión */
+.portada { -fx-background-color: acento-osc; -fx-padding: 56 56 40 56; -fx-spacing: 40; }
+.portada .label { -fx-text-fill: #e8f0ea; }
+.portada .titulo-portada { -fx-font-size: 36px; -fx-font-weight: bold; }
+.portada .texto-portada { -fx-font-size: 16px; -fx-text-fill: #c9dacf; }
+.portada .tarj { -fx-border-color: #2f5c45; -fx-border-radius: 10; -fx-padding: 14 16 14 16; }
+.form-login { -fx-background-color: white; -fx-border-color: borde; -fx-border-radius: 14; -fx-background-radius: 14; -fx-padding: 36; -fx-spacing: 18; -fx-max-width: 440; -fx-pref-width: 440; }

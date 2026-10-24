@@ -1,0 +1,27 @@
+{% extends 'admin/base.html' %}
+{% block titulo %}Administrador{% endblock %}
+{% block pagina %}
+<div class="login" style="background:var(--acento-osc);align-items:center;justify-content:center;padding:48px 16px">
+  <form method="post">
+    <input type="hidden" name="csrf" value="{{ csrf }}">
+    <div style="display:flex;align-items:center;gap:12px">
+      <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#34507f" stroke-width="1.8" aria-hidden="true"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/><path d="M9 12l2 2 4-4"/></svg>
+      <div><div style="font-size:20px;font-weight:700">Moscamed Admin</div><div class="gris" style="font-size:14px">Programa 2 · administración de accesos</div></div>
+    </div>
+    <p style="margin:0;font-size:15px;line-height:1.55;color:var(--gris2)">Solo para el administrador. Desde aquí se crean los usuarios y perfiles (PES y PEM) que entran al Programa 1.</p>
+    {% for m in get_flashed_messages() %}<div class="aviso azul" role="status">{{ m }}</div>{% endfor %}
+    {% if error %}<div class="aviso error" role="alert">{{ error }}</div>{% endif %}
+    <div class="campo"><label for="usuario">Usuario administrador</label><input id="usuario" name="usuario" class="mono" required autocomplete="username" value="{{ request.form.usuario }}"></div>
+    <div class="campo"><label for="clave">Contraseña</label><input id="clave" name="clave" type="password" required autocomplete="current-password"></div>
+    <div class="campo">
+      <label for="sede">Servidor</label>
+      <select id="sede" name="sede">
+        {% for s, (host, puerto) in servidores.items() %}<option value="{{ s }}" {{ 'selected' if s == sede }}>{{ 'Planta Metapa' if s == 'PLANTA' else 'Centro de empaque Tapachula' }} · {{ host }}</option>{% endfor %}
+      </select>
+      <small>El programa crea cada usuario en los dos servidores, porque los roles no se replican</small>
+    </div>
+    <button class="btn">Entrar al panel</button>
+    <div class="gris" style="font-size:13px">Acceso limitado a 5 conexiones · cada acción queda en la bitácora de auditoría</div>
+  </form>
+</div>
+{% endblock %}

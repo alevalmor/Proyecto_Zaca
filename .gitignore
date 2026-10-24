@@ -1,0 +1,38 @@
+# Maven / compilados
+target/
+*.class
+*.jar
+*.war
+dependency-reduced-pom.xml
+
+# Python
+__pycache__/
+*.pyc
+venv/
+.venv/
+
+# NetBeans
+nbproject/private/
+nbbuild/
+nbdist/
+nbactions.xml
+
+# IntelliJ
+.idea/
+*.iml
+out/
+
+# VS Code / Eclipse
+.vscode/
+.classpath
+.project
+.settings/
+
+# Sistema
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Credenciales locales
+*.env
+config.local.properties
