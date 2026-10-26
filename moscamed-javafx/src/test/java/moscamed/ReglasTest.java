@@ -32,12 +32,21 @@ class ReglasTest {
 
     @Test
     void perfilesNuevos() {
-        // cada perfil escribe solo lo suyo: aeropuerto los embarques, dispersión los informes de la avioneta
-        assertArrayEquals(new boolean[]{true, true}, Reglas.permisos("PEA", Map.of()).get("nuevo_embarque"));
+        // cada perfil escribe solo lo suyo: dispersión y el centro de empaque los informes de la avioneta
         assertArrayEquals(new boolean[]{true, false}, Reglas.permisos("PEA", Map.of()).get("dispersiones"));
         assertArrayEquals(new boolean[]{true, true}, Reglas.permisos("PED", Map.of()).get("nueva_dispersion"));
         assertArrayEquals(new boolean[]{false, false}, Reglas.permisos("PED", Map.of()).get("nuevo_envio"));
-        assertArrayEquals(new boolean[]{false, false}, Reglas.permisos("PEM", Map.of()).get("nueva_dispersion"));
+        assertArrayEquals(new boolean[]{true, true}, Reglas.permisos("PEM", Map.of()).get("nueva_dispersion"));
+        assertArrayEquals(new boolean[]{true, true}, Reglas.permisos("PEM", Map.of()).get("dispersiones"));
+        // el empaque solo consulta los envíos y registra su llegada; el estado del lote sí lo modifica
+        assertArrayEquals(new boolean[]{false, false}, Reglas.permisos("PEM", Map.of()).get("nuevo_envio"));
+        assertArrayEquals(new boolean[]{true, false}, Reglas.permisos("PEM", Map.of()).get("envios"));
+        assertArrayEquals(new boolean[]{true, true}, Reglas.permisos("PEM", Map.of()).get("estado_envio"));
+        assertArrayEquals(new boolean[]{true, true}, Reglas.permisos("PEM", Map.of()).get("estado_lote"));
+        // la planta crea, modifica y cancela los envíos, pero no registra su llegada
+        assertArrayEquals(new boolean[]{true, true}, Reglas.permisos("PES", Map.of()).get("nuevo_envio"));
+        assertArrayEquals(new boolean[]{true, true}, Reglas.permisos("PES", Map.of()).get("envios"));
+        assertArrayEquals(new boolean[]{true, false}, Reglas.permisos("PES", Map.of()).get("estado_envio"));
         for (String perfil : Reglas.PERFILES.keySet()) {
             assertEquals(Reglas.VISTAS.size(), Reglas.PERMISOS_PERFIL.get(perfil).size(), perfil + " define todas las vistas");
         }
@@ -46,10 +55,7 @@ class ReglasTest {
     }
 
     @Test
-    void embarqueYDispersion() {
-        assertEquals(List.of(), Reglas.erroresEmbarque(40_000_000, 15_000_000));
-        assertEquals(List.of(), Reglas.erroresEmbarque(40_000_000, 40_000_000)); // todo se queda en el aeropuerto
-        assertEquals(1, Reglas.erroresEmbarque(40_000_000, 40_000_001).size());
+    void dispersion() {
         assertEquals(List.of(), Reglas.erroresDispersion(10, 10, 2300));
         assertEquals(List.of("Supera las moscas que quedan en esa existencia"), Reglas.erroresDispersion(11, 10, 2300));
         assertEquals(List.of("La altitud de vuelo es obligatoria"), Reglas.erroresDispersion(5, 10, 0));

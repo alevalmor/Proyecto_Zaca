@@ -40,12 +40,8 @@ public class Programa2 extends Application {
 
     static final List<String> TABLAS = List.of("responsable", "centro_empaque", "lote_produccion", "control_calidad", "vehiculo",
             "zona_liberacion", "envio", "embarque_aereo", "liberacion", "historial");
-    /** Puestos que se ofrecen al crear un usuario de cada perfil. */
-    static final Map<String, List<String>> PUESTOS = Map.of(
-            "PES", List.of("Técnico de irradiación", "Analista de control de calidad", "Técnico de cría", "Supervisor de turno"),
-            "PEM", List.of("Jefe de empaque", "Técnico de empaque", "Supervisor de turno"),
-            "PEA", List.of("Encargado de aeropuerto", "Técnico de recepción de embarques"),
-            "PED", List.of("Encargada de dispersión", "Auxiliar de dispersión"));
+    /** Perfiles que el administrador puede crear; el título también se guarda como puesto de la persona. */
+    static final Map<String, String> TITULOS = Map.of("PES", "Administrador Moscamed", "PEM", "Administrador Empacadora SENASICA");
     static final SecureRandom AZAR = new SecureRandom();
 
     static Programa2 app;
@@ -53,6 +49,7 @@ public class Programa2 extends Application {
     BorderPane marco;
     String flash;
     long ultimoUso = System.currentTimeMillis();
+    javafx.animation.Timeline vigilante;
 
     public static void main(String[] args) {
         launch(args);
@@ -60,19 +57,26 @@ public class Programa2 extends Application {
 
     @Override
     public void start(Stage stage) {
+        preparar(stage);
+        stage.setScene(scene);
+        mostrarLogin(null);
+        stage.show();
+    }
+
+    /** Crea la escena y el vigilante de inactividad sin mostrar nada; el inicio de sesión de Selector la usa al entrar. */
+    void preparar(Stage stage) {
         app = this;
+        marco = new BorderPane();
+        marco.getStyleClass().add("admin");
         scene = new Scene(new StackPane(), 1280, 860);
         scene.getStylesheets().add(getClass().getResource("estilos.css").toExternalForm());
         scene.addEventFilter(InputEvent.ANY, e -> ultimoUso = System.currentTimeMillis());
-        var vigilante = new javafx.animation.Timeline(new javafx.animation.KeyFrame(javafx.util.Duration.seconds(15), e -> {
+        vigilante = new javafx.animation.Timeline(new javafx.animation.KeyFrame(javafx.util.Duration.seconds(15), e -> {
             if (Db.sede != null && System.currentTimeMillis() - ultimoUso > Programa1.INACTIVIDAD_MS) salir("Tu sesión terminó por inactividad.");
         }));
         vigilante.setCycleCount(javafx.animation.Timeline.INDEFINITE);
         vigilante.play();
         stage.setTitle("Moscamed Admin · Programa 2");
-        stage.setScene(scene);
-        mostrarLogin(null);
-        stage.show();
     }
 
     @Override
@@ -144,7 +148,7 @@ public class Programa2 extends Application {
     Node menu(String activo) {
         VBox menu = new VBox();
         menu.getStyleClass().add("menu");
-        HBox marca = new HBox(10, escudo(30, "#a8b8d8"), new VBox(lbl("Moscamed Admin", "marca"), lbl("Programa 2 · permisos superiores", "sub")));
+        HBox marca = new HBox(10, escudo(30, "#BC955C"), new VBox(lbl("Moscamed Admin", "marca"), lbl("Programa 2 · permisos superiores", "sub")));
         marca.setAlignment(Pos.CENTER_LEFT);
         VBox items = new VBox(2, lbl("ACCESOS", "seccion"));
         VBox.setVgrow(items, Priority.ALWAYS);
@@ -154,7 +158,7 @@ public class Programa2 extends Application {
             if (e[0].equals(activo)) b.getStyleClass().add("activo");
             b.setMaxWidth(Double.MAX_VALUE);
             b.setAlignment(Pos.CENTER_LEFT);
-            b.setStyle("-fx-text-fill: " + (e[0].equals(activo) ? "white; -fx-font-weight: bold;" : "#d5dcea;") + " -fx-font-size: 15px;");
+            b.setStyle("-fx-text-fill: " + (e[0].equals(activo) ? "white; -fx-font-weight: bold;" : "#dbe8df;") + " -fx-font-size: 15px;");
             b.setOnAction(x -> ir(e[0], null));
             items.getChildren().add(b);
         }
@@ -168,6 +172,10 @@ public class Programa2 extends Application {
     // ---------- Inicio de sesión ----------
 
     void mostrarLogin(String mensaje) {
+        if (Selector.ventana != null) { // abierto desde el inicio de sesión único: se regresa a él
+            Selector.volver(mensaje);
+            return;
+        }
         marco = new BorderPane();
         marco.getStyleClass().add("admin");
         TextField usuario = new TextField();
@@ -177,27 +185,10 @@ public class Programa2 extends Application {
         Button entrar = btn("Entrar al panel", () -> {});
         entrar.setDefaultButton(true);
         entrar.setMaxWidth(Double.MAX_VALUE);
-        entrar.setOnAction(e -> {
-            String u = usuario.getText().trim();
-            try {
-                var primero = Db.conectarCualquiera(u, clave.getText());
-                String s = primero.getKey();
-                Connection con = primero.getValue();
-                boolean admin = (Boolean) Db.q(con, "SELECT pg_has_role(current_user, 'rol_admin', 'member') AS si").get(0).get("si");
-                if (!admin) {
-                    con.close();
-                    mostrarErrores(errores, List.of("Este usuario no es administrador."));
-                    return;
-                }
-                Db.abrir(s, u, clave.getText(), con);
-                ir("usuarios", null);
-            } catch (SQLException ex) {
-                mostrarErrores(errores, List.of(Db.errorConexion(ex, "ningún servidor")));
-            }
-        });
-        HBox marca = new HBox(12, escudo(40, "#34507f"), new VBox(lbl("Moscamed Admin", "h2", "h2-grande"), lbl("Programa 2 · administración de accesos", "gris")));
+        entrar.setOnAction(e -> entrar(usuario.getText().trim(), clave.getText(), errores));
+        HBox marca = new HBox(12, escudo(40, "#6A1B29"), new VBox(lbl("Moscamed Admin", "h2", "h2-grande"), lbl("Programa 2 · administración de accesos", "gris")));
         marca.setAlignment(Pos.CENTER_LEFT);
-        VBox form = new VBox(marca, lbl("Solo para el administrador. Desde aquí se crean los usuarios y perfiles (PES, PEM, PEA y PED) que entran al Programa 1.", "gris"));
+        VBox form = new VBox(marca, lbl("Solo para el administrador. Desde aquí se crean los usuarios y perfiles (PES y PEM) que entran al Programa 1.", "gris"));
         form.getStyleClass().add("form-login");
         if (mensaje != null) form.getChildren().add(aviso(mensaje, "azul"));
         form.getChildren().addAll(errores, campo("Usuario administrador", usuario, null), campoClave("Contraseña", clave, null),
@@ -205,9 +196,29 @@ public class Programa2 extends Application {
                 lbl("Acceso limitado a 5 conexiones · cada acción queda en la bitácora de auditoría", "gris", "chico"));
         StackPane raiz = new StackPane(form);
         raiz.getStyleClass().add("admin");
-        raiz.setStyle("-fx-background-color: #1c2433; -fx-padding: 48 16 48 16;");
+        raiz.setStyle("-fx-background-color: #123826; -fx-padding: 48 16 48 16;");
         scene.setRoot(raiz);
         usuario.requestFocus();
+    }
+
+    /** Solo entran los usuarios dentro de rol_admin. */
+    boolean entrar(String usuario, String clave, VBox errores) {
+        try {
+            var primero = Db.conectarCualquiera(usuario, clave);
+            Connection con = primero.getValue();
+            boolean admin = (Boolean) Db.q(con, "SELECT pg_has_role(current_user, 'rol_admin', 'member') AS si").get(0).get("si");
+            if (!admin) {
+                con.close();
+                mostrarErrores(errores, List.of("Este usuario no es administrador."));
+                return false;
+            }
+            Db.abrir(primero.getKey(), usuario, clave, con);
+            ir("usuarios", null);
+            return true;
+        } catch (SQLException ex) {
+            mostrarErrores(errores, List.of(Db.errorConexion(ex, "ningún servidor")));
+            return false;
+        }
     }
 
     // ---------- Usuarios y perfiles ----------
@@ -304,10 +315,8 @@ public class Programa2 extends Application {
     Node nuevoUsuario(String perfil) {
         String sede = Reglas.sede(perfil), prefijo = sede.equals("PLANTA") ? "MET-" : "TAP-", rol = Reglas.PERFILES.get(perfil)[3];
         ToggleGroup grupo = new ToggleGroup();
-        String[][] opciones = {{"PES", "PES · Esterilizador", "Planta Metapa · lotes y su calidad"},
-                {"PEM", "PEM · Empacador", "Centro de empaque · traslados desde Metapa"},
-                {"PEA", "PEA · Aeropuerto", "Aeropuerto Tapachula · embarques de Perú"},
-                {"PED", "PED · Dispersión", "Encargada de los informes de la avioneta"}};
+        String[][] opciones = {{"PES", TITULOS.get("PES"), "Planta Metapa · lotes y su calidad"},
+                {"PEM", TITULOS.get("PEM"), "Centro de empaque · traslados desde Metapa"}};
         Node[] botones = new Node[opciones.length];
         for (int i = 0; i < opciones.length; i++) {
             ToggleButton b = Programa1.opcion(opciones[i][1], opciones[i][2], opciones[i][0], grupo);
@@ -320,7 +329,6 @@ public class Programa2 extends Application {
         });
 
         TextField nombre = new TextField(), paterno = new TextField(), materno = new TextField(), tel = new TextField(), correo = new TextField();
-        ComboBox<String> puesto = Lotes.combo(PUESTOS.get(perfil), null);
         TextField empleado = new TextField(prefijo + "…");
         empleado.setEditable(false);
         TextField usuario = new TextField();
@@ -383,7 +391,7 @@ public class Programa2 extends Application {
                     int rid = (Integer) Db.q1("""
                             INSERT INTO responsable (num_empleado, nombre, ap_paterno, ap_materno, puesto, telefono, correo, sede, perfil, usuario_bd)
                             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING id""",
-                            num[0], nombre.getText().trim(), paterno.getText().trim(), vacio(materno), puesto.getValue(), vacio(tel), vacio(correo),
+                            num[0], nombre.getText().trim(), paterno.getText().trim(), vacio(materno), TITULOS.get(perfil), vacio(tel), vacio(correo),
                             sede, perfil, u).get("id");
                     // Solo se guardan las vistas donde el administrador quitó algo.
                     for (var e : marcas.entrySet()) {
@@ -405,7 +413,7 @@ public class Programa2 extends Application {
         VBox form = new VBox(18,
                 caja(h2("1. Perfil"), campos(2, botones)),
                 caja(h2("2. Datos de la persona"), campos(3, campo("Nombre(s)", nombre, null), campo("Apellido paterno", paterno, null),
-                        campo("Apellido materno", materno, null), campo("Puesto", puesto, null), campo("Teléfono", tel, null), campo("Correo", correo, null))),
+                        campo("Apellido materno", materno, null), campo("Teléfono", tel, null), campo("Correo", correo, null))),
                 caja(h2("3. Acceso"), campos(3, campo("Número de empleado", empleado, "Se asigna el siguiente al guardar"),
                         campo("Usuario", usuario, null), new VBox(4, campoClave("Contraseña", clave, "Mínimo 10 caracteres, con número y símbolo"), generar)),
                         lbl("Al guardar se muestran el usuario y la contraseña para copiarlos y entregarlos. PostgreSQL solo guarda la contraseña cifrada: "

@@ -17,34 +17,27 @@ public final class Reglas {
             new String[]{"nuevo_envio", "Nuevo envío"},
             new String[]{"envios", "Lista de envíos"},
             new String[]{"estado_envio", "Estado de envío / llegada"},
-            new String[]{"nuevo_embarque", "Nuevo embarque aéreo"},
-            new String[]{"embarques", "Embarques aéreos de Perú"},
             new String[]{"nueva_dispersion", "Nuevo informe de dispersión"},
-            new String[]{"dispersiones", "Informes de dispersión"},
-            new String[]{"zonas", "Zonas prioritarias"});
+            new String[]{"dispersiones", "Informes de dispersión"});
 
     /** Lo máximo que permite cada perfil: {ver, modificar}. La base de datos lo hace cumplir con sus roles. */
     public static final Map<String, Map<String, boolean[]>> PERMISOS_PERFIL = Map.of(
             "PES", mapa(new Object[][]{
                     {"nuevo_lote", true, true}, {"lotes", true, true}, {"estado_lote", true, true},
-                    {"nuevo_envio", false, false}, {"envios", true, false}, {"estado_envio", true, false},
-                    {"nuevo_embarque", false, false}, {"embarques", true, false},
-                    {"nueva_dispersion", false, false}, {"dispersiones", true, false}, {"zonas", true, false}}),
+                    {"nuevo_envio", true, true}, {"envios", true, true}, {"estado_envio", true, false}, // la llegada la registra el empaque
+                    {"nueva_dispersion", false, false}, {"dispersiones", true, false}}),
             "PEM", mapa(new Object[][]{
                     {"nuevo_lote", false, false}, {"lotes", true, false}, {"estado_lote", true, true},
-                    {"nuevo_envio", true, true}, {"envios", true, true}, {"estado_envio", true, true},
-                    {"nuevo_embarque", false, false}, {"embarques", true, false},
-                    {"nueva_dispersion", false, false}, {"dispersiones", true, false}, {"zonas", true, false}}),
+                    {"nuevo_envio", false, false}, {"envios", true, false}, {"estado_envio", true, true}, // solo registra la llegada
+                    {"nueva_dispersion", true, true}, {"dispersiones", true, true}}),
             "PEA", mapa(new Object[][]{
                     {"nuevo_lote", false, false}, {"lotes", true, false}, {"estado_lote", true, false},
                     {"nuevo_envio", false, false}, {"envios", true, false}, {"estado_envio", true, false},
-                    {"nuevo_embarque", true, true}, {"embarques", true, true},
-                    {"nueva_dispersion", false, false}, {"dispersiones", true, false}, {"zonas", true, false}}),
+                    {"nueva_dispersion", false, false}, {"dispersiones", true, false}}),
             "PED", mapa(new Object[][]{
                     {"nuevo_lote", false, false}, {"lotes", true, false}, {"estado_lote", true, false},
                     {"nuevo_envio", false, false}, {"envios", true, false}, {"estado_envio", true, false},
-                    {"nuevo_embarque", false, false}, {"embarques", true, false},
-                    {"nueva_dispersion", true, true}, {"dispersiones", true, true}, {"zonas", true, false}}));
+                    {"nueva_dispersion", true, true}, {"dispersiones", true, true}}));
 
     /** Perfil: {nombre, lugar de trabajo, sede (servidor al que entra), rol de PostgreSQL}. */
     public static final Map<String, String[]> PERFILES = new LinkedHashMap<>();
@@ -79,14 +72,6 @@ public final class Reglas {
     /** Misma fórmula que la columna generada control_calidad.aprobado. */
     public static boolean calidadAprobada(double emergencia, double vuelo, double esterilidad) {
         return emergencia >= 75 && vuelo >= 65 && esterilidad >= 99.5;
-    }
-
-    /** quedaAeropuerto: lo que se queda en el aeropuerto; el resto va al centro de empaque. */
-    public static List<String> erroresEmbarque(long cantidad, long quedaAeropuerto) {
-        var errores = new java.util.ArrayList<String>();
-        if (cantidad <= 0) errores.add("La cantidad del embarque debe ser mayor que cero");
-        if (quedaAeropuerto < 0 || quedaAeropuerto > cantidad) errores.add("Lo que se queda en el aeropuerto va de 0 a lo que trae el embarque");
-        return errores;
     }
 
     /** La dispersión es solo aérea: siempre lleva altitud de vuelo. */

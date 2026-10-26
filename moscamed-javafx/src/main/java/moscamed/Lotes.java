@@ -283,24 +283,16 @@ final class Lotes {
         String etapa = esPes() ? "PLANTA" : "EMPAQUE";
         var cp = calidades.get("PLANTA");
         var ce = calidades.get("EMPAQUE");
-        long nEnvios = l(lote.get("envios")), dispersados = l(lote.get("dispersados"));
         String est = s(lote.get("estado"));
 
         HBox titulo = new HBox(12, lbl(codigo, "h1", "mono"), pill(est));
         titulo.setAlignment(Pos.CENTER_LEFT);
-        var derecha = new HBox();
+        var derecha = new HBox(12, selectorLote(codigo));
+        derecha.setAlignment(Pos.BOTTOM_RIGHT);
         String cod = codigo;
         if (puede("lotes", true) && (est.equals("PRODUCIDO") || est.equals("APROBADO"))) {
             derecha.getChildren().add(btn("Modificar lote", "gris", () -> ir("modificar_lote", cod)));
         }
-
-        Node recorrido = caja(h2("Recorrido del lote"), fila(10,
-                paso("Producido", fecha(lote.get("fecha_produccion")), 1),
-                paso("Irradiado", fecha(lote.get("fecha_irradiacion")) + " · " + lote.get("dosis_gy") + " Gy", 1),
-                paso("Calidad planta", cp == null ? "Pendiente" : resultado(cp) + " " + fecha(cp.get("fecha")), cp == null ? 0 : 1),
-                paso("Calidad empaque", ce == null ? "Opcional · sin prueba" : resultado(ce) + " " + fecha(ce.get("fecha")), ce == null ? 0 : 1),
-                paso("Enviado a Tapachula", nEnvios + (nEnvios == 1 ? " envío" : " envíos"), nEnvios > 0 ? 1 : 0),
-                paso("Dispersado por aire", dispersados + " de " + nEnvios + " envíos", nEnvios > 0 && dispersados == nEnvios ? 1 : dispersados > 0 ? 0.5 : 0)));
 
         VBox datos = caja(h2("Datos del lote"), Ui.datos(3,
                 "Fecha de producción", fecha(lote.get("fecha_produccion")), "Fecha de irradiación", fecha(lote.get("fecha_irradiacion")),
@@ -327,27 +319,26 @@ final class Lotes {
         lateral.getChildren().add(aviso("El estado del lote no se escribe a mano: el sistema lo calcula con sus pruebas, envíos y liberaciones. "
                 + "Así las dos sedes nunca lo editan al mismo tiempo.", "ambar"));
 
-        return new VBox(18, encabezado(new VBox(4, lbl("Lotes / Estado", "ruta"), titulo), derecha), recorrido,
+        return new VBox(18, encabezado(new VBox(4, lbl("Lotes / Estado", "ruta"), titulo), derecha),
                 columnas(new VBox(18, datos, calidad, tablaEnvios), lateral));
+    }
+
+    /** Lista de todos los lotes, del más reciente al más antiguo; al elegir uno se abre su estado. */
+    static Node selectorLote(String actual) throws SQLException {
+        ComboBox<Map<String, Object>> lotes = new ComboBox<>();
+        lotes.getItems().addAll(Db.q("SELECT codigo, estado, fecha_produccion FROM v_lote ORDER BY fecha_produccion DESC, codigo DESC"));
+        lotes.setConverter(Envios.convertidor(l -> l.get("codigo") + " · " + l.get("estado") + " · " + fecha(l.get("fecha_produccion"))));
+        lotes.setVisibleRowCount(12);
+        for (var l : lotes.getItems()) if (actual.equals(l.get("codigo"))) lotes.setValue(l);
+        lotes.setOnAction(e -> {
+            var elegido = lotes.getValue();
+            if (elegido != null && !actual.equals(elegido.get("codigo"))) ir("estado_lote", s(elegido.get("codigo")));
+        });
+        return campo("Ver otro lote", lotes, null);
     }
 
     static String resultado(Map<String, Object> c) {
         return (Boolean) c.get("aprobado") ? "Aprobado" : "Rechazado";
-    }
-
-    /** Paso del recorrido: avance 0 (falta), 0.5 (parcial) o 1 (hecho). */
-    static Node paso(String titulo, String detalle, double avance) {
-        Region lleno = new Region();
-        lleno.getStyleClass().addAll("barra", "barra-hecho");
-        Region vacio = new Region();
-        vacio.getStyleClass().add("barra");
-        HBox barra = new HBox(lleno, vacio);
-        lleno.prefWidthProperty().bind(barra.widthProperty().multiply(avance));
-        HBox.setHgrow(vacio, Priority.ALWAYS);
-        if (avance >= 1) vacio.setVisible(false);
-        VBox v = new VBox(6, barra, lbl(titulo, "dato"), lbl(detalle, "gris", "chico"));
-        v.setMaxWidth(Double.MAX_VALUE);
-        return v;
     }
 
     static Node tarjetaCalidad(String etapa, Map<String, Object> c, String clase) {

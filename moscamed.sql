@@ -842,7 +842,7 @@ COMMENT ON TABLE vehiculo        IS 'Camionetas del traslado terrestre Metapa ->
 COMMENT ON TABLE zona_liberacion IS 'Zonas donde se dispersan moscas; la clave enlaza con el trampeo.';
 COMMENT ON TABLE envio           IS 'Traslado terrestre de un lote a Tapachula (PEM). recibido = llegada al centro de empaque.';
 COMMENT ON TABLE embarque_aereo  IS 'Embarques de moscas estériles de Perú en el aeropuerto de Tapachula (PEA).';
-COMMENT ON TABLE liberacion      IS 'Informes de dispersión aérea capturados por la encargada de dispersión (PED).';
+COMMENT ON TABLE liberacion      IS 'Informes de dispersión aérea capturados por la encargada de dispersión (PED) o el centro de empaque (PEM).';
 COMMENT ON TABLE auditoria       IS 'Bitácora con frases que escribe el programa.';
 COMMENT ON TABLE historial       IS 'Cada alta, cambio o baja con la fila antes y después; la escribe la base sola.';
 COMMENT ON VIEW v_existencia     IS 'Moscas por dispersar por envío o embarque y lugar (aeropuerto o centro de empaque).';
@@ -881,9 +881,10 @@ GRANT INSERT (lote_id, etapa, emergencia, vuelo, esterilidad, peso_mg, fecha, re
 GRANT UPDATE (emergencia, vuelo, esterilidad, peso_mg, fecha, responsable_id, observaciones)
     ON control_calidad TO rol_produccion, rol_empaque;  -- quien repite la prueba la firma (lo pone la base)
 
--- Centro de empaque: envíos. Se dan de alta en camino; recibir y cancelar son cambios.
-GRANT INSERT (lote_id, vehiculo_id, fecha_salida, cantidad, temperatura, responsable_id) ON envio TO rol_empaque;
-GRANT UPDATE (lote_id, vehiculo_id, fecha_salida, cantidad, temperatura, recibido, cancelado) ON envio TO rol_empaque;
+-- Envíos: la planta los da de alta en camino, los modifica o los cancela; el centro de empaque solo registra la llegada.
+GRANT INSERT (lote_id, vehiculo_id, fecha_salida, cantidad, temperatura, responsable_id) ON envio TO rol_produccion;
+GRANT UPDATE (lote_id, vehiculo_id, fecha_salida, cantidad, temperatura, cancelado) ON envio TO rol_produccion;
+GRANT UPDATE (recibido) ON envio TO rol_empaque;
 
 -- Aeropuerto: embarques de Perú.
 GRANT INSERT (guia_aerea, vuelo, origen, fecha_llegada, cantidad, queda_aeropuerto, temperatura, responsable_id, observaciones)
@@ -891,11 +892,12 @@ GRANT INSERT (guia_aerea, vuelo, origen, fecha_llegada, cantidad, queda_aeropuer
 GRANT UPDATE (guia_aerea, vuelo, origen, fecha_llegada, cantidad, queda_aeropuerto, temperatura, observaciones)
     ON embarque_aereo TO rol_aeropuerto;
 
--- Dispersión: informes de vuelo.
+-- Dispersión: informes de vuelo. La encargada y el centro de empaque los registran, modifican y borran.
 GRANT INSERT (envio_id, embarque_id, punto, zona_id, fecha, cantidad, superficie_ha, altitud_m, avioneta, piloto, responsable_id, observaciones)
-    ON liberacion TO rol_dispersion;
+    ON liberacion TO rol_dispersion, rol_empaque;
 GRANT UPDATE (envio_id, embarque_id, punto, zona_id, fecha, cantidad, superficie_ha, altitud_m, avioneta, piloto, observaciones)
-    ON liberacion TO rol_dispersion;
+    ON liberacion TO rol_dispersion, rol_empaque;
+GRANT DELETE ON liberacion TO rol_dispersion, rol_empaque;
 
 -- Administrador (Programa 2): personas, permisos por vista y catálogos.
 GRANT INSERT (num_empleado, nombre, ap_paterno, ap_materno, puesto, telefono, correo, sede, perfil, usuario_bd, activo, fecha_alta),

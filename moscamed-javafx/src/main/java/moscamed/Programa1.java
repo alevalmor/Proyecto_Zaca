@@ -43,9 +43,7 @@ public class Programa1 extends Application {
             {"General", new String[][]{{"inicio", "Inicio"}}},
             {"Lotes", new String[][]{{"nuevo_lote", "Nuevo lote"}, {"lotes", "Lista de lotes"}, {"estado_lote", "Estado de lote"}}},
             {"Metapa → Tapachula", new String[][]{{"nuevo_envio", "Nuevo envío"}, {"envios", "Lista de envíos"}, {"estado_envio", "Estado de envío"}}},
-            {"Aeropuerto Tapachula", new String[][]{{"nuevo_embarque", "Nuevo embarque"}, {"embarques", "Embarques"}}},
             {"Dispersión aérea", new String[][]{{"nueva_dispersion", "Nuevo informe"}, {"dispersiones", "Informes"}}},
-            {"Reportes", new String[][]{{"zonas", "Zonas prioritarias"}}},
             {"Ajustes", new String[][]{{"perfil", "Mi perfil"}}},
     };
     /** Pantalla -> {permiso que pide, "mod" si pide modificar, entrada del menú que queda activa}. */
@@ -61,11 +59,9 @@ public class Programa1 extends Application {
             "modificar_envio", new String[]{"envios", "mod", "envios"},
             "estado_envio", new String[]{"estado_envio", "", "estado_envio"}));
     static {
-        PANTALLAS.put("zonas", new String[]{"zonas", "", "zonas"});
-        PANTALLAS.put("embarques", new String[]{"embarques", "", "embarques"});
-        PANTALLAS.put("nuevo_embarque", new String[]{"nuevo_embarque", "mod", "nuevo_embarque"});
         PANTALLAS.put("dispersiones", new String[]{"dispersiones", "", "dispersiones"});
         PANTALLAS.put("nueva_dispersion", new String[]{"nueva_dispersion", "mod", "nueva_dispersion"});
+        PANTALLAS.put("modificar_dispersion", new String[]{"dispersiones", "mod", "dispersiones"});
     }
 
     static Programa1 app;
@@ -73,6 +69,7 @@ public class Programa1 extends Application {
     BorderPane marco;
     String flash;
     long ultimoUso = System.currentTimeMillis();
+    Timeline vigilante;
 
     public static void main(String[] args) {
         launch(args);
@@ -80,19 +77,25 @@ public class Programa1 extends Application {
 
     @Override
     public void start(Stage stage) {
+        preparar(stage);
+        stage.setScene(scene);
+        mostrarLogin(null);
+        stage.show();
+    }
+
+    /** Crea la escena y el vigilante de inactividad sin mostrar nada; el inicio de sesión de Selector la usa al entrar. */
+    void preparar(Stage stage) {
         app = this;
+        marco = new BorderPane();
         scene = new Scene(new StackPane(), 1280, 860);
         scene.getStylesheets().add(getClass().getResource("estilos.css").toExternalForm());
         scene.addEventFilter(InputEvent.ANY, e -> ultimoUso = System.currentTimeMillis());
-        Timeline vigilante = new Timeline(new KeyFrame(Duration.seconds(15), e -> {
+        vigilante = new Timeline(new KeyFrame(Duration.seconds(15), e -> {
             if (Db.sede != null && System.currentTimeMillis() - ultimoUso > INACTIVIDAD_MS) salir("Tu sesión terminó por inactividad. Vuelve a iniciar sesión.");
         }));
         vigilante.setCycleCount(Timeline.INDEFINITE);
         vigilante.play();
         stage.setTitle("Moscamed · Programa 1");
-        stage.setScene(scene);
-        mostrarLogin(null);
-        stage.show();
     }
 
     @Override
@@ -148,7 +151,6 @@ public class Programa1 extends Application {
                 case "inicio" -> switch (Db.perfil) {
                     case "PES" -> Inicio.pes();
                     case "PEM" -> Inicio.pem();
-                    case "PEA" -> Embarques.lista();
                     default -> Dispersion.lista();
                 };
                 case "lotes" -> Lotes.lista();
@@ -159,11 +161,9 @@ public class Programa1 extends Application {
                 case "nuevo_envio" -> Envios.formulario(null);
                 case "modificar_envio" -> Envios.formulario(arg);
                 case "estado_envio" -> Envios.estado(arg);
-                case "embarques" -> Embarques.lista();
-                case "nuevo_embarque" -> Embarques.formulario();
                 case "dispersiones" -> Dispersion.lista();
-                case "nueva_dispersion" -> Dispersion.formulario(arg);
-                case "zonas" -> Zonas.vista();
+                case "nueva_dispersion" -> Dispersion.formulario(arg, null);
+                case "modificar_dispersion" -> Dispersion.formulario(null, arg);
                 case "perfil" -> Perfil.vista();
                 default -> throw new IllegalArgumentException(pantalla);
             };
@@ -176,6 +176,8 @@ public class Programa1 extends Application {
             }
             contenido.getChildren().add(aviso(Db.mensaje(e), "error"));
         }
+        marco.getStyleClass().remove("pem");
+        if ("PEM".equals(Db.perfil)) marco.getStyleClass().add("pem"); // PEM: guinda, dorado y gris; PES se queda en verde
         marco.setLeft(menu(p[2]));
         marco.setCenter(desplazable(contenido));
         if (scene.getRoot() != marco) scene.setRoot(marco);
@@ -207,7 +209,7 @@ public class Programa1 extends Application {
         VBox menu = new VBox();
         menu.getStyleClass().add("menu");
         String[] datos = Reglas.PERFILES.get(Db.perfil);
-        HBox marca = new HBox(10, logo(30, "#9fd3b2"), new VBox(lbl("Moscamed", "marca"), lbl(datos[1], "sub")));
+        HBox marca = new HBox(10, logo(30, "PEM".equals(Db.perfil) ? "#BC955C" : "#9fd3b2"), new VBox(lbl("Moscamed", "marca"), lbl(datos[1], "sub")));
         marca.setAlignment(Pos.CENTER_LEFT);
         VBox perfil = new VBox(lbl("Perfil " + Db.perfil, "dato"), lbl(datos[0], "sub"));
         perfil.getStyleClass().add("menu-perfil");
@@ -252,6 +254,10 @@ public class Programa1 extends Application {
     // ---------- Inicio de sesión ----------
 
     void mostrarLogin(String mensaje) {
+        if (Selector.ventana != null) { // abierto desde el inicio de sesión único: se regresa a él
+            Selector.volver(mensaje);
+            return;
+        }
         marco = new BorderPane();
         VBox portada = new VBox();
         portada.getStyleClass().add("portada");
@@ -302,19 +308,21 @@ public class Programa1 extends Application {
     }
 
     /** El usuario no elige sede ni perfil: entra al servidor que responda, lee su perfil y se cambia al servidor de su sede. */
-    void entrar(String usuario, String clave, VBox errores) {
+    boolean entrar(String usuario, String clave, VBox errores) {
         try {
             var primero = Db.conectarCualquiera(usuario, clave);
             String sede = primero.getKey();
             Connection con = primero.getValue();
             var yo = Db.q(con, "SELECT * FROM responsable WHERE usuario_bd = current_user");
+            boolean admin = (Boolean) Db.q(con, "SELECT pg_has_role(current_user, 'rol_admin', 'member') AS si").get(0).get("si");
             String error = null;
-            if (yo.isEmpty()) error = "Tu usuario no tiene perfil en el sistema. Pídeselo al administrador.";
+            if (admin) error = "Este usuario es de administrador: no puede entrar como operativo.";
+            else if (yo.isEmpty()) error = "Tu usuario no tiene perfil en el sistema. Pídeselo al administrador.";
             else if (!(Boolean) yo.get(0).get("activo")) error = "Tu usuario está dado de baja.";
             if (error != null) {
                 con.close();
                 mostrarErrores(errores, List.of(error));
-                return;
+                return false;
             }
             var r = yo.get(0);
             if (!sede.equals(r.get("sede"))) { // cada sede escribe en su propio servidor
@@ -341,8 +349,10 @@ public class Programa1 extends Application {
             Db.empleado = s(r.get("num_empleado"));
             Db.permisos = Reglas.permisos(Db.perfil, quitados);
             ir("inicio");
+            return true;
         } catch (SQLException e) {
             mostrarErrores(errores, List.of(Db.errorConexion(e, "ningún servidor")));
+            return false;
         }
     }
 }

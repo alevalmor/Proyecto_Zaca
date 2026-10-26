@@ -23,7 +23,7 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 
-/** Dispersión aérea: la encargada (perfil PED) captura el informe que le entrega la avioneta. */
+/** Dispersión aérea: la encargada (PED) o el centro de empaque (PEM) capturan, modifican y borran los informes de la avioneta. */
 final class Dispersion {
     private Dispersion() {}
 
@@ -69,12 +69,18 @@ final class Dispersion {
                         + " ORDER BY li.fecha DESC LIMIT ? OFFSET ?", p.toArray())) {
                     String envio = s(li.get("envio"));
                     Node fuente = li.get("envio") != null ? link(envio, () -> ir("estado_envio", envio)) : mono(li.get("embarque"));
+                    String id = s(li.get("id"));
+                    HBox acc = new HBox(12);
+                    if (puede("dispersiones", true)) {
+                        acc.getChildren().addAll(link("Modificar", () -> ir("modificar_dispersion", id)),
+                                link("Borrar", () -> borrar(id, li.get("clave") + " del " + fechaHora(li.get("fecha")))));
+                    }
                     nodos.add(new Node[]{t(fechaHora(li.get("fecha"))), t(li.get("clave") + " · " + li.get("nombre")), fuente,
                             t(punto(li.get("punto"))), mono(li.get("avioneta")), t(li.get("piloto")), t(miles(li.get("cantidad"))),
-                            t(miles(li.get("superficie_ha")) + " ha"), t(miles(li.get("altitud_m")) + " m")});
+                            t(miles(li.get("superficie_ha")) + " ha"), t(miles(li.get("altitud_m")) + " m"), acc});
                 }
                 resultados.getChildren().setAll(tabla(List.of("Fecha", "Zona", "Moscas de", "Salieron de", "Avioneta", "Piloto", "Moscas",
-                        "Superficie", "Altitud"), nodos, Set.of(6, 7, 8), "Todavía no hay informes de dispersión."),
+                        "Superficie", "Altitud", ""), nodos, Set.of(6, 7, 8, 9), "Todavía no hay informes de dispersión."),
                         Lotes.paginacion(pagina, total, cargar[0], null));
             } catch (SQLException e) {
                 resultados.getChildren().setAll(aviso(Db.mensaje(e), "error"));
@@ -114,20 +120,44 @@ final class Dispersion {
                 kpis, existencias, caja(filtros), caja(resultados));
     }
 
-    // ---------- Nuevo informe ----------
+    // ---------- Nuevo informe y modificar ----------
 
-    static Node formulario(String elegida) throws SQLException {
-        var existencias = Db.q("SELECT * FROM v_existencia WHERE quedan > 0 ORDER BY desde");
+    /** Si la existencia es de donde salieron las moscas del informe. */
+    private static boolean esDe(Map<String, Object> informe, Map<String, Object> e) {
+        return "ENVIO".equals(e.get("origen")) ? l(e.get("id")) == l(informe.get("envio_id"))
+                : l(e.get("id")) == l(informe.get("embarque_id")) && e.get("punto").equals(informe.get("punto"));
+    }
+
+    /** idInforme null: informe nuevo (elegida preselecciona la existencia); si no, modifica ese informe. */
+    static Node formulario(String elegida, String idInforme) throws SQLException {
+        Map<String, Object> informe = null;
+        if (idInforme != null) {
+            informe = Db.q1("SELECT * FROM liberacion WHERE id = ?", Long.parseLong(idInforme));
+            if (informe == null) throw new SQLException("No existe el informe " + idInforme);
+        }
+        Map<String, Object> original = informe;
+        var existencias = Db.q("""
+                SELECT * FROM v_existencia WHERE quedan > 0 OR (origen = 'ENVIO' AND id = ?) OR (origen = 'EMBARQUE' AND id = ? AND punto = ?)
+                ORDER BY desde""", informe == null ? null : informe.get("envio_id"),
+                informe == null ? null : informe.get("embarque_id"), informe == null ? null : informe.get("punto"));
         var zonas = Zonas.prioridad(14, LocalDate.now());
         ComboBox<Map<String, Object>> fuente = new ComboBox<>();
+        for (var e : existencias) { // lo que lleva este mismo informe vuelve a estar disponible al modificarlo
+            if (original != null && esDe(original, e)) {
+                e.put("quedan", l(e.get("quedan")) + l(original.get("cantidad")));
+                fuente.setValue(e);
+            } else if (clave(e).equals(elegida)) {
+                fuente.setValue(e);
+            }
+        }
         fuente.getItems().addAll(existencias);
         fuente.setConverter(Envios.convertidor(e -> e.get("codigo") + " · " + punto(e.get("punto")) + " · quedan " + miles(e.get("quedan"))));
-        for (var e : existencias) if (clave(e).equals(elegida)) fuente.setValue(e);
         if (fuente.getValue() == null && !existencias.isEmpty()) fuente.setValue(existencias.get(0));
         ComboBox<Map<String, Object>> zona = new ComboBox<>();
         zona.getItems().addAll(zonas);
         zona.setConverter(Envios.convertidor(z -> z.get("clave") + " · " + z.get("nombre") + " (" + s(z.get("prioridad")).toLowerCase() + ")"));
-        if (!zonas.isEmpty()) zona.setValue(zonas.get(0));
+        for (var z : zonas) if (original != null && l(z.get("id")) == l(original.get("zona_id"))) zona.setValue(z);
+        if (zona.getValue() == null && !zonas.isEmpty()) zona.setValue(zonas.get(0));
 
         TextField fecha = new TextField(LocalDateTime.now().format(Envios.FECHA_HORA));
         TextField cantidad = new TextField(fuente.getValue() == null ? "" : s(fuente.getValue().get("quedan")));
@@ -137,11 +167,20 @@ final class Dispersion {
         avioneta.getStyleClass().add("mono");
         TextArea obs = new TextArea();
         obs.setPrefRowCount(2);
+        if (original != null) {
+            fecha.setText(fechaHora(original.get("fecha")));
+            cantidad.setText(s(original.get("cantidad")));
+            sup.setText(s(original.get("superficie_ha")));
+            alt.setText(s(original.get("altitud_m")));
+            avioneta.setText(s(original.get("avioneta")));
+            piloto.setText(s(original.get("piloto")));
+            obs.setText(s(original.get("observaciones")));
+        }
         TextField resp = new TextField(Db.nombre + " · " + Db.empleado + " (usuario en sesión)");
         resp.setEditable(false);
         VBox errores = errores();
 
-        var guardar = btn("Guardar informe", () -> {
+        var guardar = btn(original == null ? "Guardar informe" : "Guardar cambios", () -> {
             var f = fuente.getValue();
             List<String> errs = new ArrayList<>();
             LocalDateTime fl = null;
@@ -169,19 +208,30 @@ final class Dispersion {
             BigDecimal supHa = superficie;
             try {
                 Db.tx(() -> {
-                    Db.exec("""
-                            INSERT INTO liberacion (envio_id, embarque_id, punto, zona_id, fecha, cantidad, superficie_ha, altitud_m,
-                            avioneta, piloto, responsable_id, observaciones) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
-                            deEnvio ? f.get("id") : null, deEnvio ? null : f.get("id"), f.get("punto"), zona.getValue().get("id"), cuando,
-                            cant, supHa, (int) altM, avioneta.getText().trim().toUpperCase(), piloto.getText().trim(), Db.responsableId,
-                            obs.getText().isBlank() ? null : obs.getText().trim());
-                    Db.auditar("Registró dispersión de " + f.get("codigo") + " en " + zona.getValue().get("clave"));
+                    String observaciones = obs.getText().isBlank() ? null : obs.getText().trim();
+                    if (original == null) {
+                        Db.exec("""
+                                INSERT INTO liberacion (envio_id, embarque_id, punto, zona_id, fecha, cantidad, superficie_ha, altitud_m,
+                                avioneta, piloto, responsable_id, observaciones) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                                deEnvio ? f.get("id") : null, deEnvio ? null : f.get("id"), f.get("punto"), zona.getValue().get("id"), cuando,
+                                cant, supHa, (int) altM, avioneta.getText().trim().toUpperCase(), piloto.getText().trim(), Db.responsableId,
+                                observaciones);
+                        Db.auditar("Registró dispersión de " + f.get("codigo") + " en " + zona.getValue().get("clave"));
+                    } else { // quien modifica queda como responsable (lo pone la base)
+                        Db.exec("""
+                                UPDATE liberacion SET envio_id = ?, embarque_id = ?, punto = ?, zona_id = ?, fecha = ?, cantidad = ?,
+                                superficie_ha = ?, altitud_m = ?, avioneta = ?, piloto = ?, observaciones = ? WHERE id = ?""",
+                                deEnvio ? f.get("id") : null, deEnvio ? null : f.get("id"), f.get("punto"), zona.getValue().get("id"), cuando,
+                                cant, supHa, (int) altM, avioneta.getText().trim().toUpperCase(), piloto.getText().trim(), observaciones,
+                                original.get("id"));
+                        Db.auditar("Modificó dispersión de " + f.get("codigo") + " en " + zona.getValue().get("clave"));
+                    }
                 });
             } catch (SQLException ex) {
                 mostrarErrores(errores, List.of(Db.mensaje(ex)));
                 return;
             }
-            avisar("Informe de dispersión guardado.");
+            avisar(original == null ? "Informe de dispersión guardado." : "Informe de dispersión modificado.");
             ir("dispersiones");
         });
 
@@ -204,7 +254,23 @@ final class Dispersion {
         }
         VBox lateral = caja(h2("Zonas sugeridas por el trampeo"),
                 lbl("Ordenadas por prioridad (base de trampeo vía FDW, últimos 14 días). Pulsa una para elegirla.", "gris", "chico"), sugeridas);
-        return new VBox(20, encabezado(titulo("Inicio / Dispersión / Nuevo", "Nuevo informe de dispersión aérea"), lbl("Solo PED · dispersión", "chip")),
+        return new VBox(20, encabezado(original == null ? titulo("Inicio / Dispersión / Nuevo", "Nuevo informe de dispersión aérea")
+                        : titulo("Inicio / Dispersión / Modificar", "Modificar informe de dispersión aérea"), lbl("PED y PEM · dispersión", "chip")),
                 columnas(form, lateral));
+    }
+
+    /** Borra un informe de dispersión; sus moscas vuelven a quedar por dispersar. */
+    static void borrar(String id, String descripcion) {
+        if (!confirmar("¿Borrar el informe de dispersión de " + descripcion + "? No se puede deshacer.")) return;
+        try {
+            Db.tx(() -> {
+                Db.exec("DELETE FROM liberacion WHERE id = ?", Long.parseLong(id));
+                Db.auditar("Borró el informe de dispersión de " + descripcion);
+            });
+            avisar("Informe de dispersión borrado.");
+        } catch (SQLException ex) {
+            avisar(Db.mensaje(ex));
+        }
+        ir("dispersiones");
     }
 }

@@ -11,8 +11,8 @@
     <maven.compiler.release>21</maven.compiler.release>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <javafx.version>21.0.5</javafx.version>
-    <!-- Programa 2: mvn javafx:run -Dapp.main=moscamed.Programa2 -->
-    <app.main>moscamed.Programa1</app.main>
+    <!-- Ventana de inicio para elegir Programa 1 o 2. Directo: mvn javafx:run -Dapp.main=moscamed.Programa2 -->
+    <app.main>moscamed.Selector</app.main>
   </properties>
 
   <dependencies>

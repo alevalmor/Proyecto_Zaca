@@ -2,7 +2,7 @@
 
 Aplicación de escritorio con las vistas del diseño "Mockups Sistema Moscamed". Usa Java 21 o más reciente, JavaFX 21 y PostgreSQL por JDBC.
 
-- **Programa 1** (`moscamed.Programa1`): operativo para cuatro perfiles. PES (planta Metapa): lotes y control de calidad. PEM (centro de empaque Tapachula): traslados terrestres Metapa → Tapachula y su llegada. PEA (aeropuerto de Tapachula): embarques aéreos de Perú. PED (encargada de dispersión): informes de dispersión aérea. Todos ven zonas prioritarias y su perfil.
+- **Programa 1** (`moscamed.Programa1`): operativo para cuatro perfiles. PES (planta Metapa): lotes y control de calidad. PEM (centro de empaque Tapachula): traslados terrestres Metapa → Tapachula y su llegada. PEA (aeropuerto de Tapachula): embarques aéreos de Perú. PED (encargada de dispersión): informes de dispersión aérea. Todos ven su perfil.
 - **Programa 2** (`moscamed.Programa2`): administrador. Crea usuarios de los cuatro perfiles, da de baja, restablece contraseñas y muestra el estado del sistema.
 
 Cada persona entra con **su propio usuario de PostgreSQL**. La base de datos aplica los permisos con `rol_produccion`, `rol_empaque`, `rol_aeropuerto`, `rol_dispersion` y `rol_admin`.
@@ -32,7 +32,7 @@ Las variables de entorno apuntan a Pgpool-II de cada sede. Sin ellas se usan los
 | `PG_DB` | `moscamed` |
 
 ```bash
-mvn javafx:run                                  # Programa 1
+mvn javafx:run                                  # inicio de sesión: Operativo o Administrador
 mvn javafx:run -Dapp.main=moscamed.Programa2    # Programa 2
 ```
 
@@ -73,8 +73,9 @@ mvn test
 | `Reglas.java` | Reglas sin base de datos: perfiles, permisos, calidad, prioridad de zonas y validaciones |
 | `Ui.java` + `estilos.css` | Piezas visuales del diseño: tarjetas, píldoras, tablas, formularios y campo de contraseña |
 | `Programa1.java` | Ventana, inicio de sesión, menú lateral y navegación del Programa 1 |
-| `Inicio`, `Lotes`, `Zonas`, `Perfil` | Inicio por perfil, lotes y calidad, zonas prioritarias y perfil |
+| `Inicio`, `Lotes`, `Zonas`, `Perfil` | Inicio por perfil, lotes y calidad, prioridad de zonas (consulta) y perfil |
 | `Envios.java` | Traslado terrestre Metapa → Tapachula y registro de llegada (PEM) |
 | `Embarques.java` | Embarques aéreos de Perú en el aeropuerto de Tapachula (PEA) |
 | `Dispersion.java` | Informes de dispersión aérea y existencias por dispersar (PED) |
 | `Programa2.java` | Pantallas del administrador |
+| `Selector.java` | Inicio de sesión único: elige Operativo o Administrador y solo deja entrar si el usuario corresponde (lo que abre `mvn javafx:run` y `moscamed.jar`) |

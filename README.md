@@ -59,7 +59,7 @@ bash bd/instalar.sh              # la primera vez instala; después solo enciend
 $env:PG_HOST_PLANTA="127.0.0.1";  $env:PG_PORT_PLANTA="5452"    # planta (con la base trampeo)
 $env:PG_HOST_EMPAQUE="127.0.0.1"; $env:PG_PORT_EMPAQUE="5453"   # empaque
 cd moscamed-javafx
-mvn javafx:run                                  # Programa 1
+mvn javafx:run                                  # inicio de sesión: Operativo o Administrador
 mvn javafx:run -Dapp.main=moscamed.Programa2    # Programa 2
 ```
 

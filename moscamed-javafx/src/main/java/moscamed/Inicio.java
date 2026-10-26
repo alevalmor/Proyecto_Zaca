@@ -52,6 +52,7 @@ final class Inicio {
 
         var acciones = acciones();
         if (puede("nuevo_lote", true)) acciones.getChildren().add(btn("+  Nuevo lote", () -> ir("nuevo_lote")));
+        if (puede("nuevo_envio", true)) acciones.getChildren().add(btn("+  Nuevo envío", "borde", () -> ir("nuevo_envio")));
         if (!pendientes.isEmpty()) {
             String codigo = s(pendientes.get(0).get("codigo"));
             acciones.getChildren().add(btn("Registrar control de calidad", "borde", () -> ir("estado_lote", codigo)));
@@ -78,7 +79,8 @@ final class Inicio {
                 caja(lbl("Pendientes de control de calidad", "h2", "h2-grande"), lista),
                 caja(lbl("Lo que puedes hacer como PES", "h2", "h2-grande"),
                         lbl("Registrar y modificar lotes, y su control de calidad en la planta.", "gris"),
-                        lbl("Consultar envíos, embarques, dispersiones y zonas prioritarias sin modificarlos: esos datos son de Tapachula.", "gris")));
+                        lbl("Registrar los envíos a Tapachula y modificarlos o cancelarlos mientras van en camino.", "gris"),
+                        lbl("Consultar dispersiones sin modificarlas: esos datos son de Tapachula.", "gris")));
         return new VBox(22, saludo("Planta esterilizadora · Metapa", "Sincronizado con el centro de empaque"), kpis, acciones,
                 columnas(ultimos, lateral));
     }
@@ -123,7 +125,7 @@ final class Inicio {
                     lbl("MTD " + dec(z.get("mtd"), 2) + " · " + z.get("silvestres") + " silvestres", "gris", "chico")), pill("ALTA"), null, null));
         }
         if (altas.isEmpty()) lista.getChildren().add(lbl("Sin capturas silvestres en el periodo.", "gris"));
-        VBox zonas = caja(encabezado(lbl("Dónde dispersar más", "h2", "h2-grande"), link("Ver reporte", () -> ir("zonas"))),
+        VBox zonas = caja(lbl("Dónde dispersar más", "h2", "h2-grande"),
                 lbl("Según el trampeo de los últimos 14 días (base de trampeo vía FDW)", "gris", "chico"), lista);
         return new VBox(22, saludo("Centro de empaque · Tapachula", "Sincronizado con la planta"), kpis, acciones, columnas(camino, zonas));
     }

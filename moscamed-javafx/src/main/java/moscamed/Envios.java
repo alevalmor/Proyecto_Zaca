@@ -99,7 +99,9 @@ final class Envios {
         var derecha = new HBox();
         if (puede("nuevo_envio", true)) derecha.getChildren().add(btn("+  Nuevo envío", () -> ir("nuevo_envio")));
         return new VBox(18, encabezado(titulo("Inicio / Envíos", "Traslados terrestres Metapa → Tapachula"), derecha),
-                puede("envios", true) ? aviso("Como PEM registras los traslados por tierra desde la planta y su llegada a Tapachula. Por tierra no se dispersa.", "azul")
+                puede("envios", true) ? aviso("Registras los traslados por tierra a Tapachula y puedes modificarlos o cancelarlos mientras van en camino. "
+                        + "La llegada la registra el centro de empaque.", "azul")
+                        : puede("estado_envio", true) ? aviso("Consultas los traslados y registras su llegada a Tapachula desde el estado de cada envío.", "azul")
                         : aviso("Solo consultas los traslados: los registra el centro de empaque. La dispersión es solo aérea."),
                 kpis, caja(filtros), caja(resultados));
     }
@@ -241,7 +243,7 @@ final class Envios {
                 aviso("Por tierra solo se trasladan las pupas de la planta de Metapa al centro de empaque de Tapachula; no se dispersan. "
                         + "Al llegar, el centro registra la llegada y la encargada de dispersión ya puede usarlas.", "azul"));
         return new VBox(20, encabezado(titulo("Inicio / Envíos / " + (envio != null ? "Modificar" : "Nuevo"),
-                envio != null ? "Modificar envío " + codigo : "Nuevo envío"), lbl("Solo PEM · centro de empaque", "chip")), columnas(form, lateral));
+                envio != null ? "Modificar envío " + codigo : "Nuevo envío"), lbl("Solo PES · planta Metapa", "chip")), columnas(form, lateral));
     }
 
     static javafx.util.StringConverter<Map<String, Object>> convertidor(java.util.function.Function<Map<String, Object>, String> texto) {
@@ -278,7 +280,9 @@ final class Envios {
         titulo.setAlignment(Pos.CENTER_LEFT);
         var derecha = new HBox(12);
         String cod = codigo;
-        if (est.equals("EN CAMINO") && puede("envios", true)) derecha.getChildren().add(btn("Modificar envío", "gris", () -> ir("modificar_envio", cod)));
+        if (est.equals("EN CAMINO") && puede("envios", true)) {
+            derecha.getChildren().addAll(btn("Cancelar envío", "gris", () -> cancelar(cod)), btn("Modificar envío", "gris", () -> ir("modificar_envio", cod)));
+        }
         if (est.equals("RECIBIDO") && puede("nueva_dispersion", true)) {
             derecha.getChildren().add(btn("Registrar dispersión", () -> ir("nueva_dispersion", "ENVIO|" + cod + "|EMPAQUE")));
         }
@@ -334,19 +338,19 @@ final class Envios {
             avisar("Envío " + codigo + " recibido en Tapachula.");
             ir("estado_envio", codigo);
         });
-        var cancelar = btn("Cancelar envío", "gris", () -> {
-            if (!confirmar("¿Cancelar el envío " + codigo + "? No se puede deshacer.")) return;
-            try {
-                Db.exec("CALL cancelar_envio(?)", codigo);
-            } catch (SQLException ex) {
-                mostrarErrores(errores, List.of(Db.mensaje(ex)));
-                return;
-            }
-            avisar("Envío " + codigo + " cancelado.");
-            ir("estado_envio", codigo);
-        });
         recibir.setMaxWidth(Double.MAX_VALUE);
-        return caja(h2("Llegada al centro de empaque"), errores, campo("Fecha y hora de llegada", llegada, "dd/mm/aaaa hh:mm"),
-                recibir, accionesFin(cancelar));
+        return caja(h2("Llegada al centro de empaque"), errores, campo("Fecha y hora de llegada", llegada, "dd/mm/aaaa hh:mm"), recibir);
+    }
+
+    /** Cancela un envío en camino; las pupas regresan al lote. */
+    static void cancelar(String codigo) {
+        if (!confirmar("¿Cancelar el envío " + codigo + "? No se puede deshacer.")) return;
+        try {
+            Db.exec("CALL cancelar_envio(?)", codigo);
+            avisar("Envío " + codigo + " cancelado.");
+        } catch (SQLException ex) {
+            avisar(Db.mensaje(ex));
+        }
+        ir("estado_envio", codigo);
     }
 }

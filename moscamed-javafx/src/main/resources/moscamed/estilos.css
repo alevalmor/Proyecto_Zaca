@@ -1,4 +1,5 @@
-/* Estilos del diseño "Mockups Sistema Moscamed". .root.admin cambia a la paleta del Programa 2. */
+/* Estilos del diseño "Mockups Sistema Moscamed". PES usa el verde de .root; .root.pem cambia a guinda, dorado y gris
+   (#6A1B29, #BC955C, #63666A) y .root.admin (Programa 2) combina el verde de PES con el guinda y dorado de PEM. */
 .root {
     acento: #1d6b47; acento-osc: #123826; acento-sel: #2b6b4b; acento-suave: #e8f3ec;
     fondo: #f4f6f3; borde: #d9ded8; borde-input: #b9c2bb; linea: #edf0ec;
@@ -6,11 +7,26 @@
     menu-texto: #dbe8df; menu-sub: #a9c2b3; menu-sec: #8fb3a0; menu-perfil: #1b4a33; menu-linea: #2f5c45;
     -fx-font-family: "Segoe UI"; -fx-font-size: 14px; -fx-background-color: fondo; -fx-text-fill: texto;
 }
-.root.admin {
-    acento: #34507f; acento-osc: #1c2433; acento-sel: #34507f; acento-suave: #eaf0fa;
-    fondo: #f3f5f8; borde: #d8dde6; linea: #eef1f5;
-    menu-texto: #d5dcea; menu-sub: #a8b4c8; menu-sec: #93a1b8; menu-perfil: #283349; menu-linea: #344157;
+.root.pem {
+    acento: #6A1B29; acento-osc: #4a1320; acento-sel: #7d2635; acento-suave: #f6ecee;
+    fondo: #f5f4f2; borde: #dcd9d6; borde-input: #b8b9bb; linea: #eeecea;
+    texto: #1f1a1b; gris: #63666A; gris2: #45474a;
+    menu-texto: #f1e6e8; menu-sub: #dcc7a6; menu-sec: #BC955C; menu-perfil: #5e1a28; menu-linea: #6e2a38;
 }
+.root.admin {
+    acento: #6A1B29; acento-osc: #123826; acento-sel: #1d6b47; acento-suave: #f6ecee;
+    fondo: #f4f5f4; borde: #dadcda; borde-input: #b8b9bb; linea: #eef0ee;
+    gris: #63666A; gris2: #45474a;
+    menu-texto: #dbe8df; menu-sub: #dcc7a6; menu-sec: #BC955C; menu-perfil: #1b4a33; menu-linea: #2f5c45;
+}
+.root.pem .menu .label { -fx-text-fill: #f3eaec; }
+.root.pem .menu .tag, .root.admin .menu .tag { -fx-background-color: #BC955C; -fx-text-fill: #3a0f17; }
+.root.pem .menu .tag-ver { -fx-background-color: #380e18; -fx-text-fill: menu-sub; }
+.root.pem .menu .hyperlink, .root.admin .menu .hyperlink { -fx-text-fill: #e6d3b3; }
+.root.pem .chip, .root.admin .chip { -fx-background-color: #f4ecdf; -fx-text-fill: #6A1B29; }
+.root.pem .chip-blanco, .root.admin .chip-blanco { -fx-background-color: white; -fx-text-fill: gris2; }
+.root.pem .aviso { -fx-background-color: #f4ecdf; -fx-text-fill: #5a1622; }
+.root.pem .item-sel, .root.admin .item-sel { -fx-background-color: #faf4f5; }
 .label { -fx-text-fill: texto; }
 .mono { -fx-font-family: "Consolas"; }
 .gris { -fx-text-fill: gris; }
@@ -123,4 +139,4 @@
 .portada .titulo-portada { -fx-font-size: 36px; -fx-font-weight: bold; }
 .portada .texto-portada { -fx-font-size: 16px; -fx-text-fill: #c9dacf; }
 .portada .tarj { -fx-border-color: #2f5c45; -fx-border-radius: 10; -fx-padding: 14 16 14 16; }
-.form-login { -fx-background-color: white; -fx-border-color: borde; -fx-border-radius: 14; -fx-background-radius: 14; -fx-padding: 36; -fx-spacing: 18; -fx-max-width: 440; -fx-pref-width: 440; }
+.form-login { -fx-background-color: white; -fx-background-radius: 14; -fx-padding: 36; -fx-spacing: 18; -fx-max-width: 440; -fx-pref-width: 440; }
