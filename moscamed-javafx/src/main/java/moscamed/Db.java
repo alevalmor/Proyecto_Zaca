@@ -208,7 +208,7 @@ public final class Db {
         if (estado.equals("42501")) return "La base de datos no permite esta acción con tu perfil.";
         if (estado.equals("23505")) return "Ya existe un registro con ese código o usuario; vuelve a intentarlo.";
         if (estado.startsWith("08")) return "Se perdió la conexión con el servidor. Vuelve a intentarlo.";
-        // Regla de negocio de los triggers de esquema.sql: su texto ya está escrito para la persona.
+        // Regla de negocio de los triggers de moscamed.sql: su texto ya está escrito para la persona.
         if (estado.equals("P0001") && e instanceof org.postgresql.util.PSQLException p && p.getServerErrorMessage() != null)
             return p.getServerErrorMessage().getMessage();
         return "La base de datos rechazó los datos: " + e.getMessage().lines().findFirst().orElse("");

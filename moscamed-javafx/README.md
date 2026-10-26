@@ -13,13 +13,13 @@ Al crear un usuario, el administrador ve la contraseña (generada o escrita por 
 
 ## Base de datos
 
-Dos servidores PostgreSQL master-master, Pgpool-II en cada sede y la base de trampeo leída con `postgres_fdw`. Todo se levanta con Docker: ver [`../infra/README.md`](../infra/README.md), que también trae los pasos para los servidores reales.
+Dos servidores PostgreSQL master-master y la base de trampeo leída con `postgres_fdw`, todo en [`../moscamed.sql`](../moscamed.sql) (su encabezado trae los pasos para los servidores reales). En esta computadora se levanta sin Docker, en los puertos 5452 (planta) y 5453 (empaque):
 
 ```bash
-cd ../infra && docker compose up -d --build && bash probar.sh
+bash ../bd/instalar.sh
 ```
 
-Usuarios de ejemplo (contraseña `contrasena`): `usr_planta` (PES), `usr_empaque` (PEM), `usr_aeropuerto` (PEA), `usr_dispersion` (PED) y `usr_admin`.
+Usuarios de ejemplo (contraseña `moscamed`): `usr_planta` (PES), `usr_empaque` (PEM), `usr_aeropuerto` (PEA), `usr_dispersion` (PED) y `usr_admin`.
 
 ## Ejecutar
 

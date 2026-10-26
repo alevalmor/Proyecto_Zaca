@@ -18,7 +18,7 @@ class ReglasTest {
     }
 
     @Test
-    void calidad() {  // la prioridad de zonas vive en la base: la prueba infra/probar.sh
+    void calidad() {  // la prioridad de zonas vive en la base (zonas_prioritarias de moscamed.sql)
         assertTrue(Reglas.calidadAprobada(75, 65, 99.5));
         assertFalse(Reglas.calidadAprobada(86.4, 64.9, 99.9));
     }

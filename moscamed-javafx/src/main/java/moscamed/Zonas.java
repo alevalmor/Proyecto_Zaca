@@ -30,7 +30,7 @@ import javafx.stage.FileChooser;
 final class Zonas {
     private Zonas() {}
 
-    /** Zonas ordenadas por prioridad; la regla vive en la base (función zonas_prioritarias de esquema.sql). */
+    /** Zonas ordenadas por prioridad; la regla vive en la base (función zonas_prioritarias de moscamed.sql). */
     static List<Map<String, Object>> prioridad(int dias, LocalDate corte) throws SQLException {
         return Db.q("SELECT * FROM zonas_prioritarias(?, ?)", corte, dias);
     }
