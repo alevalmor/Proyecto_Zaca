@@ -60,7 +60,7 @@ $env:PG_HOST_PLANTA="127.0.0.1";  $env:PG_PORT_PLANTA="5452"    # planta (con la
 $env:PG_HOST_EMPAQUE="127.0.0.1"; $env:PG_PORT_EMPAQUE="5453"   # empaque
 cd moscamed-javafx
 mvn javafx:run                                  # inicio de sesión: Operativo o Administrador
-mvn javafx:run -Dapp.main=moscamed.Programa2    # Programa 2
+mvn javafx:run -Dapp.main=moscamed.controlador.Programa2    # Programa 2
 ```
 
 En Linux es igual, cambiando `$env:VAR="valor"` por `export VAR=valor`. Para instalar en las computadoras de las sedes (Windows o Linux) ver [`moscamed-javafx/README.md`](moscamed-javafx/README.md#instalar-en-windows-y-linux). Al entrar, cada persona solo escribe su usuario y contraseña: el sistema sabe su perfil y su sede.
